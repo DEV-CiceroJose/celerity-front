@@ -5,6 +5,7 @@ import {
 import { Link } from 'react-router-dom'
 import { Brand } from '../components/Brand'
 import { Button } from '../components/ui'
+import { useScrollReveal } from '../hooks/useScrollReveal'
 
 const pains = [
   { icon: ClockCountdown, title: 'Prazos espalhados', text: 'Vencimentos ficam em planilhas, agendas e conversas. Quando o alerta chega tarde, a operação já está exposta.' },
@@ -20,6 +21,7 @@ const outcomes = [
 ]
 
 export function LandingPage() {
+  useScrollReveal('landing')
   return (
     <div className="landing">
       <header className="landing-nav container">

@@ -24,9 +24,22 @@ Copie `.env.example` para `.env` se precisar alterar a URL da API.
 
 ## Rotas do sistema
 
-Todas ficam sob `/app`: `dashboard`, `empresas`, `processos`, `pocos`, `licencas`, `exigencias`, `pagamentos`, `controle-mensal`, `assessoria`, `documentos`, `relatorios`, `usuarios`, `configuracoes` e `notificacoes`.
+Todas ficam sob `/app`: `dashboard`, `empresas`, `processos`, `pocos`, `licencas`, `exigencias`, `pagamentos`, `calendario`, `controle-mensal`, `assessoria`, `documentos`, `relatorios`, `usuarios`, `configuracoes`, `notificacoes` e `ajuda`.
 
 Os módulos principais incluem rotas de listagem, cadastro, detalhes e edição. Poços inclui as subáreas de acompanhamento, licenciados, indeferidos e exigências; licenças inclui o calendário de vencimentos.
+
+## Experiência disponível
+
+- landing page comercial orientada às dores do cliente;
+- busca global com `Ctrl + K` ou `⌘ K`;
+- filtros persistentes, visões salvas e ações rápidas;
+- formulários validados com rascunho automático;
+- calendário unificado e relatórios configuráveis;
+- central de ajuda pesquisável e notificações interativas;
+- onboarding por perfil, estados de conexão e controle de permissões;
+- layout responsivo, tabelas em cartões no celular e animações com scroll reveal.
+
+Acesso demonstrativo: `demo@celerityambiental.com.br` com a senha `Celerity@2026`.
 
 ## Integração futura
 

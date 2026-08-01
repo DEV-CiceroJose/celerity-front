@@ -2,6 +2,24 @@
 
 Este roadmap organiza melhorias para tornar o sistema mais rápido, previsível e confortável para as equipes técnica, administrativa e gerencial.
 
+## Status da implementação do frontend
+
+As etapas deste documento já possuem uma implementação funcional no frontend, usando dados demonstrativos enquanto a API não está conectada:
+
+- busca global com atalho de teclado;
+- formulários específicos, máscaras, validações e rascunho automático;
+- estados de carregamento, vazio, erro, offline, sucesso e falta de permissão;
+- filtros persistentes, visões salvas e ações rápidas com confirmação segura;
+- painel por perfil, indicadores clicáveis e explicação dos riscos;
+- detalhes com histórico, documentos, prazos e comentários;
+- calendário unificado com filtros e exportação em formato ICS;
+- ajuda contextual pesquisável, notificações interativas e onboarding por perfil;
+- tabelas convertidas em cartões no celular e ações principais adaptadas ao toque;
+- relatórios configuráveis, prévia, exportação CSV e mapa demonstrativo;
+- animações de entrada, scroll reveal, microinterações e respeito à redução de movimento.
+
+Recursos que dependem de dados reais, envio de e-mails, permissões do servidor, geocodificação ou geração oficial de documentos serão ativados na integração descrita em `INTEGRACAO_BACKEND.md`.
+
 ## Objetivos de experiência
 
 - reduzir o tempo necessário para localizar um processo;

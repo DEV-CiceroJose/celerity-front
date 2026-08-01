@@ -51,7 +51,7 @@ export function Breadcrumb({ items = [] }) {
   )
 }
 
-export function FilterBar({ placeholder, value, onChange, children }) {
+export function FilterBar({ placeholder, value, onChange, onToggleFilters, activeCount = 0, children }) {
   return (
     <div className="filter-bar">
       <label className="search-field">
@@ -59,7 +59,7 @@ export function FilterBar({ placeholder, value, onChange, children }) {
         <span className="sr-only">Pesquisar</span>
         <input value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
       </label>
-      <button className="filter-button" type="button"><SlidersHorizontal size={20} /> Filtros <span className="filter-count">2</span></button>
+      <button className={`filter-button ${activeCount ? 'is-active' : ''}`} type="button" onClick={onToggleFilters}><SlidersHorizontal size={20} /> Filtros {activeCount > 0 && <span className="filter-count">{activeCount}</span>}</button>
       {children}
     </div>
   )

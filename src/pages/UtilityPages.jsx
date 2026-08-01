@@ -1,16 +1,30 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Bell, BookOpen, ChartBar, Check, ChatCircleText, FileCsv, FilePdf, Gear, Lifebuoy, Lock, MagnifyingGlass, Palette, PlayCircle, ShieldCheck, UserCircle } from '@phosphor-icons/react'
+import { ArrowRight, Bell, BookOpen, ChartBar, Check, ChatCircleText, DownloadSimple, FileCsv, FilePdf, Gear, Lifebuoy, Lock, MagnifyingGlass, MapPin, Palette, PlayCircle, ShieldCheck, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
+import { SuccessToast } from '../components/Experience'
 import { Breadcrumb, Button, PageHeader, StatusBadge } from '../components/ui'
 
 export function ReportsPage() {
   const reports = [
-    ['Processos por status', 'Distribuição e evolução dos processos no período.', ChartBar],
-    ['Licenças a vencer', 'Vencimentos em 7, 30, 60 e 90 dias.', FilePdf],
-    ['Produtividade da equipe', 'Movimentações e conclusões por responsável.', UserCircle],
-    ['Pagamentos e pendências', 'Valores pagos, pendentes e vencidos.', FileCsv],
+    ['Processos por status', 'Distribuição e evolução dos processos no período.', ChartBar, ['Em andamento', 'Em análise', 'Em exigência', 'Concluídos'], [61, 43, 18, 26]],
+    ['Licenças a vencer', 'Vencimentos em 7, 30, 60 e 90 dias.', FilePdf, ['Até 7 dias', 'Até 30 dias', 'Até 60 dias', 'Até 90 dias'], [6, 14, 23, 31]],
+    ['Produtividade da equipe', 'Movimentações e conclusões por responsável.', UserCircle, ['Mariana', 'Ana Beatriz', 'Carlos', 'Rafael'], [37, 29, 24, 18]],
+    ['Pagamentos e pendências', 'Valores pagos, pendentes e vencidos.', FileCsv, ['Pagos', 'Pendentes', 'Vencidos', 'Conciliando'], [72, 38, 8, 12]],
+    ['Mapa de empreendimentos', 'Distribuição territorial por situação e órgão responsável.', MapPin, [], []],
   ]
-  return <><Breadcrumb items={['Relatórios']} /><PageHeader title="Relatórios" description="Gere análises operacionais e gerenciais com filtros por período." /><div className="report-grid">{reports.map(([title, description, Icon]) => <article key={title}><Icon size={28} /><div><h2>{title}</h2><p>{description}</p></div><Button variant="secondary">Configurar <ArrowRight size={16} /></Button></article>)}</div></>
+  const [active, setActive] = useState(0)
+  const [filters, setFilters] = useState({ period: '30', company: 'Todas', owner: 'Todos', status: 'Todos' })
+  const [toast, setToast] = useState('')
+  const [title, description, ActiveIcon, labels, values] = reports[active]
+  const update = (key, value) => setFilters((current) => ({ ...current, [key]: value }))
+  const exportCsv = () => {
+    const rows = [['Relatório', title], ['Período', `${filters.period} dias`], ['Empresa', filters.company], ['Responsável', filters.owner], ['Status', filters.status], [], ['Categoria', 'Resultado'], ...labels.map((label, index) => [label, values[index]])]
+    const csv = rows.map((row) => row.map((cell) => `"${String(cell ?? '').replaceAll('"', '""')}"`).join(';')).join('\n')
+    const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }))
+    const anchor = document.createElement('a'); anchor.href = url; anchor.download = `relatorio-${title.toLowerCase().replaceAll(' ', '-')}.csv`; anchor.click(); URL.revokeObjectURL(url)
+    setToast('Relatório exportado com os filtros selecionados.')
+  }
+  return <><Breadcrumb items={['Relatórios']} /><PageHeader title="Relatórios gerenciais" description="Configure filtros, confira a prévia e exporte análises da operação." /><div className="report-grid">{reports.map(([reportTitle, reportDescription, Icon], index) => <article className={active === index ? 'active' : ''} key={reportTitle}><Icon size={28} /><div><h2>{reportTitle}</h2><p>{reportDescription}</p></div><Button variant="secondary" onClick={() => setActive(index)}>{active === index ? 'Selecionado' : 'Configurar'} <ArrowRight size={16} /></Button></article>)}</div><section className="panel report-builder"><div className="report-builder__heading"><span><ActiveIcon size={25} /></span><div><p className="eyebrow">Prévia configurável</p><h2>{title}</h2><p>{description}</p></div></div><div className="report-filters"><label>Período<select value={filters.period} onChange={(event) => update('period', event.target.value)}><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="365">Último ano</option></select></label><label>Empresa<select value={filters.company} onChange={(event) => update('company', event.target.value)}><option>Todas</option><option>Eco Norte Indústria Ltda.</option><option>Construtora Horizonte S.A.</option><option>Águas do Sertão SPE</option></select></label><label>Responsável<select value={filters.owner} onChange={(event) => update('owner', event.target.value)}><option>Todos</option><option>Mariana Costa</option><option>Ana Beatriz</option><option>Carlos Mendes</option></select></label><label>Status<select value={filters.status} onChange={(event) => update('status', event.target.value)}><option>Todos</option><option>Em andamento</option><option>Em análise</option><option>Em exigência</option><option>Concluído</option></select></label></div>{active === 4 ? <div className="enterprise-map" role="img" aria-label="Mapa demonstrativo com empreendimentos no Ceará"><div className="map-road map-road--one" /><div className="map-road map-road--two" />{[['pin--one','Eco Norte','Em análise'], ['pin--two','Águas do Sertão','Regular'], ['pin--three','Agrovale','Em exigência'], ['pin--four','Horizonte','Regular']].map(([className, name, status]) => <button className={`map-pin ${className}`} key={name} title={`${name} · ${status}`}><MapPin size={25} weight="fill" /><span><strong>{name}</strong><small>{status}</small></span></button>)}<div className="map-legend"><span><i className="map-green" />Regular</span><span><i className="map-yellow" />Em análise</span><span><i className="map-red" />Em exigência</span></div></div> : <div className="report-preview"><div className="report-preview__summary"><span>Resultado no período</span><strong>{values.reduce((total, value) => total + value, 0)}</strong><small>+12% em relação ao período anterior</small></div><div className="report-bars">{labels.map((label, index) => <article key={label}><div><strong>{label}</strong><span>{values[index]}</span></div><i><span style={{ width: `${Math.max(12, values[index])}%` }} /></i></article>)}</div></div>}<footer><span><SlidersHorizontal size={17} />A prévia usa dados demonstrativos até a conexão com a API.</span><Button icon={DownloadSimple} onClick={exportCsv}>Exportar CSV</Button></footer></section><SuccessToast message={toast} onClose={() => setToast('')} /></>
 }
 
 export function SettingsPage() {
@@ -48,18 +62,38 @@ export function SettingsPage() {
 }
 
 export function HelpPage() {
+  const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('tema')?.replace('-', ' ') || '')
   const guides = [
-    ['Primeiros passos', 'Conheça o painel e configure sua operação.', PlayCircle],
-    ['Processos e licenças', 'Cadastre, acompanhe e atualize cada processo.', BookOpen],
-    ['Prazos e exigências', 'Organize prioridades e evite vencimentos.', Lifebuoy],
-    ['Usuários e acessos', 'Entenda perfis, convites e permissões.', UserCircle],
+    ['primeiros-passos', 'Primeiros passos', 'Conheça o painel e configure sua operação.', PlayCircle, 'painel configuração operação'],
+    ['processos-licencas', 'Processos e licenças', 'Cadastre, acompanhe e atualize cada processo.', BookOpen, 'processo licença cadastro acompanhamento'],
+    ['prazos-exigencias', 'Prazos e exigências', 'Organize prioridades e evite vencimentos.', Lifebuoy, 'prazo exigência vencimento calendário'],
+    ['usuarios-acessos', 'Usuários e acessos', 'Entenda perfis, convites e permissões.', UserCircle, 'usuário acesso perfil convite permissão'],
   ]
-  return <><Breadcrumb items={['Central de ajuda']} /><PageHeader title="Como podemos ajudar?" description="Encontre orientações para usar o sistema Celerity Ambiental." /><label className="help-search"><MagnifyingGlass size={22} /><span className="sr-only">Pesquisar na ajuda</span><input placeholder="Pesquise por processo, licença, prazo ou funcionalidade" /></label><div className="help-grid">{guides.map(([title, description, Icon]) => <Link to="/app/ajuda" key={title}><Icon size={27} /><div><h2>{title}</h2><p>{description}</p></div><ArrowRight size={18} /></Link>)}</div><div className="help-layout"><section className="panel help-faq"><p className="eyebrow">Dúvidas frequentes</p><h2>Respostas rápidas</h2><details><summary>Como cadastrar um novo processo?</summary><p>Acesse Processos, selecione “Novo processo”, preencha os campos obrigatórios e salve o registro.</p></details><details><summary>Onde acompanho os próximos vencimentos?</summary><p>Use a Visão geral para prioridades ou abra Licenças → Calendário para consultar todos os vencimentos.</p></details><details><summary>Como anexar um documento?</summary><p>No detalhe de um processo ou no módulo Documentos, selecione o arquivo e defina o vínculo correspondente.</p></details><details><summary>Quem pode alterar permissões?</summary><p>Administradores e gestores autorizados podem editar perfis no módulo Usuários.</p></details></section><aside className="help-contact"><ChatCircleText size={30} /><p className="eyebrow eyebrow--green">Suporte especializado</p><h2>Não encontrou o que precisava?</h2><p>Descreva sua dúvida para a equipe de suporte. Inclua o número do processo quando houver.</p><a className="button button--primary" href="mailto:suporte@celerityambiental.com.br">Falar com o suporte</a><small>Resposta em horário comercial</small></aside></div></>
+  const faqs = [
+    ['processos-licencas', 'Como cadastrar um novo processo?', 'Acesse Processos, selecione “Novo processo”, preencha os campos obrigatórios e salve o registro.', 'cadastro novo processo formulário'],
+    ['prazos-exigencias', 'Onde acompanho os próximos vencimentos?', 'Use a Visão geral para prioridades ou abra o Calendário operacional para consultar licenças, exigências, pagamentos e tarefas.', 'vencimento prazo calendário licença exigência'],
+    ['processos-licencas', 'Como anexar um documento?', 'No detalhe de um processo ou no módulo Documentos, selecione o arquivo e defina o vínculo correspondente.', 'anexo arquivo documento processo'],
+    ['usuarios-acessos', 'Quem pode alterar permissões?', 'Administradores e gestores autorizados podem editar perfis no módulo Usuários.', 'permissão usuário perfil acesso'],
+    ['primeiros-passos', 'Como encontro uma informação rapidamente?', 'Use a busca global no topo do sistema ou pressione Ctrl + K para localizar empresas, processos, licenças e documentos.', 'busca global encontrar informação ctrl k'],
+  ]
+  const normalized = query.trim().toLocaleLowerCase('pt-BR')
+  const visibleGuides = guides.filter(([, title, description, , keywords]) => `${title} ${description} ${keywords}`.toLocaleLowerCase('pt-BR').includes(normalized))
+  const visibleFaqs = faqs.filter(([, title, answer, keywords]) => `${title} ${answer} ${keywords}`.toLocaleLowerCase('pt-BR').includes(normalized))
+  const clearSearch = () => setQuery('')
+  return <><Breadcrumb items={['Central de ajuda']} /><PageHeader title="Como podemos ajudar?" description="Encontre orientações práticas para concluir cada tarefa no sistema." /><label className="help-search"><MagnifyingGlass size={22} /><span className="sr-only">Pesquisar na ajuda</span><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Pesquise por processo, licença, prazo ou funcionalidade" />{query && <button type="button" onClick={clearSearch} aria-label="Limpar pesquisa">×</button>}</label>{(visibleGuides.length > 0 || visibleFaqs.length > 0) ? <><div className="help-grid">{visibleGuides.map(([id, title, description, Icon]) => <a href={`#${id}`} key={title}><Icon size={27} /><div><h2>{title}</h2><p>{description}</p></div><ArrowRight size={18} /></a>)}</div><div className="help-layout"><section className="panel help-faq"><p className="eyebrow">{normalized ? `${visibleFaqs.length} resultado(s)` : 'Dúvidas frequentes'}</p><h2>Respostas rápidas</h2>{visibleFaqs.map(([id, title, answer]) => <details id={id} key={title} open={Boolean(normalized)}><summary>{title}</summary><p>{answer}</p></details>)}</section><aside className="help-contact"><ChatCircleText size={30} /><p className="eyebrow eyebrow--green">Suporte especializado</p><h2>Não encontrou o que precisava?</h2><p>Descreva sua dúvida para a equipe de suporte. Inclua o número do processo quando houver.</p><a className="button button--primary" href="mailto:suporte@celerityambiental.com.br?subject=Suporte%20ao%20sistema%20Celerity">Falar com o suporte</a><small>Resposta em horário comercial</small></aside></div></> : <section className="help-empty"><MagnifyingGlass size={30} /><h2>Nenhuma orientação encontrada</h2><p>Tente pesquisar com menos palavras ou fale diretamente com o suporte.</p><Button variant="secondary" onClick={clearSearch}>Limpar pesquisa</Button></section>}</>
 }
 
 export function NotificationsPage() {
-  const alerts = [['Prazo vence em 3 dias', 'A exigência do processo SRH 2026/001395 precisa de atenção.', 'Novo'], ['Licença próxima do vencimento', 'LS nº 2025-0841 vence em 7 dias.', 'Pendente'], ['Pagamento confirmado', 'Solicitação nº 2026-0861 foi marcada como paga.', 'Lida']]
-  return <><Breadcrumb items={['Notificações']} /><PageHeader title="Notificações" description="Atualizações importantes da sua operação." /><section className="panel notifications-list">{alerts.map(([title, text, status], index) => <article key={title} className={index === 0 ? 'unread' : ''}><span className="notification-icon"><Bell size={20} /></span><div><h2>{title}</h2><p>{text}</p><time>{index === 0 ? 'há 12 minutos' : index === 1 ? 'há 2 horas' : 'ontem, 16:40'}</time></div><StatusBadge>{status}</StatusBadge></article>)}</section></>
+  const initialAlerts = [
+    { id: 1, title: 'Prazo vence em 3 dias', text: 'A exigência do processo SRH 2026/001395 precisa de atenção.', time: 'há 12 minutos', read: false, href: '/app/exigencias/1' },
+    { id: 2, title: 'Licença próxima do vencimento', text: 'LS nº 2025-0841 vence em 7 dias.', time: 'há 2 horas', read: false, href: '/app/licencas/2' },
+    { id: 3, title: 'Pagamento confirmado', text: 'Solicitação nº 2026-0861 foi marcada como paga.', time: 'ontem, 16:40', read: true, href: '/app/pagamentos/3' },
+  ]
+  const [alerts, setAlerts] = useState(() => JSON.parse(localStorage.getItem('celerity_notifications') || 'null') || initialAlerts)
+  const persist = (next) => { setAlerts(next); localStorage.setItem('celerity_notifications', JSON.stringify(next)) }
+  const markAll = () => persist(alerts.map((item) => ({ ...item, read: true })))
+  const unread = alerts.filter((item) => !item.read).length
+  return <><Breadcrumb items={['Notificações']} /><PageHeader title="Notificações" description={`${unread ? `${unread} atualização(ões) ainda não lida(s).` : 'Você está em dia com todas as atualizações.'}`} secondary={unread ? <Button variant="secondary" icon={Check} onClick={markAll}>Marcar todas como lidas</Button> : undefined} /><div className="notification-tabs"><button className="active">Todas <span>{alerts.length}</span></button><Link to="/app/configuracoes">Preferências</Link></div><section className="panel notifications-list">{alerts.map((item) => <article key={item.id} className={!item.read ? 'unread' : ''}><span className="notification-icon"><Bell size={20} /></span><Link to={item.href} onClick={() => persist(alerts.map((alert) => alert.id === item.id ? { ...alert, read: true } : alert))}><h2>{item.title}</h2><p>{item.text}</p><time>{item.time}</time></Link><button className="notification-status" type="button" onClick={() => persist(alerts.map((alert) => alert.id === item.id ? { ...alert, read: !alert.read } : alert))} aria-label={item.read ? 'Marcar como não lida' : 'Marcar como lida'}><StatusBadge>{item.read ? 'Lida' : 'Nova'}</StatusBadge></button></article>)}</section></>
 }
 
 export function NotFoundPage() {

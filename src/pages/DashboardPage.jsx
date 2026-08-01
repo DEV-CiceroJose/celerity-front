@@ -1,7 +1,8 @@
-import { ArrowRight, CalendarBlank, CaretDown, ChartLineUp, Clock, DotsThree, Warning } from '@phosphor-icons/react'
+import { ArrowRight, CalendarBlank, CaretDown, ChartLineUp, Clock, DotsThree, FileText, Plus, Warning } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { Breadcrumb, Button, PageHeader, StatusBadge } from '../components/ui'
 import { dashboardMetrics, mockRows } from '../data/mockData'
+import { authService } from '../services/authService'
 
 const activity = [
   ['Licença anexada', 'Ana Beatriz adicionou LO nº 2026-1189', 'há 18 min'],
@@ -11,13 +12,38 @@ const activity = [
 ]
 
 export function DashboardPage() {
+  const session = authService.getSession()
+  const firstName = session?.name?.split(' ')[0] || 'Mariana'
+  const roleMetrics = {
+    Técnico: [
+      { label: 'Meus processos', value: '27', change: '6 movimentados hoje', tone: 'green' },
+      { label: 'Minhas exigências', value: '08', change: '3 em atendimento', tone: 'neutral' },
+      { label: 'Prazos em 7 dias', value: '04', change: 'Prioridade da semana', tone: 'warning' },
+      { label: 'Pendências vencidas', value: '03', change: 'Atenção necessária', tone: 'danger' },
+    ],
+    Financeiro: [
+      { label: 'Aguardando pagamento', value: '19', change: 'R$ 38.420,00', tone: 'green' },
+      { label: 'Pagos neste mês', value: '31', change: 'R$ 72.180,00', tone: 'neutral' },
+      { label: 'Vencem em 7 dias', value: '06', change: 'R$ 11.240,00', tone: 'warning' },
+      { label: 'Prazo excedido', value: '04', change: 'R$ 7.890,00', tone: 'danger' },
+    ],
+  }
+  const metrics = roleMetrics[session?.role] || dashboardMetrics
+  const metricPaths = session?.role === 'Financeiro'
+    ? ['/app/pagamentos', '/app/pagamentos', '/app/pagamentos', '/app/pagamentos']
+    : ['/app/processos', '/app/licencas', '/app/exigencias', '/app/processos']
+  const quickActions = session?.role === 'Financeiro'
+    ? [['Registrar pagamento', '/app/pagamentos/novo'], ['Ver vencidos', '/app/pagamentos'], ['Anexar comprovante', '/app/documentos/novo']]
+    : [['Novo processo', '/app/processos/novo'], ['Nova exigência', '/app/exigencias/novo'], ['Anexar documento', '/app/documentos/novo']]
   return (
     <>
       <Breadcrumb items={['Visão geral']} />
-      <PageHeader eyebrow="Sexta-feira, 31 de julho" title="Visão geral" description="Acompanhe prioridades e movimentações da operação." secondary={<Button variant="secondary" icon={CalendarBlank}>Últimos 30 dias <CaretDown size={15} /></Button>} />
+      <PageHeader eyebrow="Sexta-feira, 31 de julho" title={`Olá, ${firstName}.`} description={`Sua visão de ${session?.role?.toLowerCase() || 'gestão'} está organizada por prioridade e responsabilidade.`} secondary={<Button variant="secondary" icon={CalendarBlank}>Últimos 30 dias <CaretDown size={15} /></Button>} />
+
+      <section className="dashboard-shortcuts"><div><strong>Ações rápidas</strong><span>Comece pelas tarefas mais frequentes do seu perfil.</span></div>{quickActions.map(([label, path], index) => <Link to={path} key={label}><span>{index === 2 ? <FileText size={18} /> : <Plus size={18} />}</span>{label}<ArrowRight size={15} /></Link>)}</section>
 
       <section className="metrics-strip" aria-label="Indicadores principais">
-        {dashboardMetrics.map((metric) => <article key={metric.label} className={`metric metric--${metric.tone}`}><p>{metric.label}</p><strong>{metric.value}</strong><span>{metric.change}</span></article>)}
+        {metrics.map((metric, index) => <Link to={metricPaths[index]} key={metric.label} className={`metric metric--${metric.tone}`} aria-label={`${metric.label}: ${metric.value}. Abrir registros`}><p>{metric.label}</p><strong>{metric.value}</strong><span>{metric.change}</span>{['warning', 'danger'].includes(metric.tone) && <small className="metric__reason">{metric.tone === 'danger' ? 'Crítico: o prazo já expirou. Abra para definir uma ação.' : 'Atenção: exige ação nos próximos 7 dias.'}</small>}<ArrowRight className="metric__arrow" size={16} /></Link>)}
       </section>
 
       <div className="dashboard-grid">
