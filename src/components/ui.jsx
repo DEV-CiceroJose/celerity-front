@@ -18,7 +18,8 @@ export function StatusBadge({ children }) {
   if (/pendente|aguardando|7 dias|30 dias|andamento|análise|convite/.test(key)) tone = 'warning'
   if (/vencida|vencido|excedido|indeferido/.test(key)) tone = 'danger'
   if (/exigência|atendimento/.test(key)) tone = 'info'
-  return <span className={`badge badge--${tone}`}><i aria-hidden="true" />{children}</span>
+  const guidance = tone === 'danger' ? 'Situação crítica: revise o registro e defina uma ação.' : tone === 'warning' ? 'Atenção: acompanhe o prazo ou a próxima movimentação.' : tone === 'success' ? 'Situação regular ou concluída.' : tone === 'info' ? 'Registro em tratamento pela equipe.' : 'Situação informativa.'
+  return <span className={`badge badge--${tone}`} title={guidance}><i aria-hidden="true" />{children}</span>
 }
 
 export function PageHeader({ eyebrow, title, description, actionLabel = 'Novo cadastro', actionTo, secondary }) {
@@ -67,12 +68,13 @@ export function FilterBar({ placeholder, value, onChange, onToggleFilters, activ
 
 export function Field({ label, error, hint, className = '', children, required = false }) {
   const id = useId()
+  const descriptionId = `${id}-${error ? 'error' : 'hint'}`
   return (
     <label className={`field ${className}`} htmlFor={id}>
       <span className="field__label">{label}{required && <em> *</em>}</span>
-      {typeof children === 'function' ? children({ id, 'aria-invalid': Boolean(error) }) : children}
-      {hint && <small>{hint}</small>}
-      {error && <small className="field__error">{error}</small>}
+      {typeof children === 'function' ? children({ id, 'aria-invalid': Boolean(error), 'aria-describedby': error || hint ? descriptionId : undefined }) : children}
+      {hint && !error && <small id={descriptionId}>{hint}</small>}
+      {error && <small id={descriptionId} className="field__error">{error}</small>}
     </label>
   )
 }

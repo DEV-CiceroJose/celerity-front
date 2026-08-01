@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import {
   Bell, Buildings, CalendarDots, CaretDown, ChartPieSlice, ClipboardText, CreditCard,
   FileText, Gear, ListChecks, MagnifyingGlass, NotePencil, SidebarSimple, SignOut,
-  UserCircle, UsersThree, WarningCircle, X,
+  ShieldCheck, UserCircle, UsersThree, WarningCircle, X,
 } from '@phosphor-icons/react'
 import { Brand } from '../components/Brand'
 import { ContextHelp, GlobalSearch, NetworkBanner, Onboarding } from '../components/Experience'
@@ -30,6 +30,30 @@ const adminMenu = [
   { label: 'Configurações', to: '/app/configuracoes', icon: Gear },
 ]
 
+const roleNavigation = {
+  Técnico: {
+    operation: ['Visão geral', 'Empresas', 'Processos', 'Poços', 'Licenças', 'Exigências', 'Calendário', 'Assessoria', 'Documentos'],
+    management: ['Configurações'],
+  },
+  Financeiro: {
+    operation: ['Visão geral', 'Empresas', 'Pagamentos', 'Calendário', 'Documentos'],
+    management: ['Relatórios', 'Configurações'],
+  },
+  'Somente leitura': {
+    operation: menu.map((item) => item.label),
+    management: ['Relatórios', 'Configurações'],
+  },
+}
+
+function navigationForRole(role) {
+  const rules = roleNavigation[role]
+  if (!rules) return { operation: menu, management: adminMenu }
+  return {
+    operation: menu.filter((item) => rules.operation.includes(item.label)),
+    management: adminMenu.filter((item) => rules.management.includes(item.label)),
+  }
+}
+
 export function AppLayout() {
   const [collapsed, setCollapsed] = useState(() => JSON.parse(localStorage.getItem('celerity_preferences') || '{}').compactSidebar || false)
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -38,6 +62,12 @@ export function AppLayout() {
   const location = useLocation()
   const navigate = useNavigate()
   const session = authService.getSession()
+  const navigation = navigationForRole(session?.role)
+  const activeModule = [...menu, ...adminMenu].find((item) => location.pathname === item.to || location.pathname.startsWith(`${item.to}/`))
+  const restrictedRoute = Boolean(roleNavigation[session?.role] && activeModule && ![...navigation.operation, ...navigation.management].some((item) => item.to === activeModule.to))
+  const mobileItems = session?.role === 'Financeiro'
+    ? menu.filter((item) => ['Visão geral', 'Pagamentos', 'Calendário'].includes(item.label))
+    : menu.filter((item) => ['Visão geral', 'Processos', 'Calendário'].includes(item.label))
   const initials = (session?.name || 'Mariana Costa').split(' ').slice(0, 2).map((part) => part[0]).join('').toUpperCase()
 
   useScrollReveal(location.pathname)
@@ -88,8 +118,8 @@ export function AppLayout() {
           <button className="sidebar__mobile-close" onClick={() => setMobileOpen(false)} aria-label="Fechar menu"><X size={22} /></button>
         </div>
         <nav aria-label="Menu principal">
-          <NavGroup label="Operação" items={menu} />
-          <NavGroup label="Gestão" items={adminMenu} />
+          <NavGroup label="Operação" items={navigation.operation} />
+          {navigation.management.length > 0 && <NavGroup label="Gestão" items={navigation.management} />}
         </nav>
         <div className="sidebar__footer">
           <Link className="sidebar__support" to="/app/ajuda"><span>?</span>{!collapsed && <div><strong>Central de ajuda</strong><small>Guias e suporte</small></div>}</Link>
@@ -103,6 +133,7 @@ export function AppLayout() {
           <button className="mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Abrir menu"><SidebarSimple size={23} /></button>
           <button className="global-search" onClick={() => setSearchOpen(true)}><MagnifyingGlass size={19} /><span>Pesquisar processos, empresas ou documentos</span><kbd>⌘ K</kbd></button>
           <div className="app-header__actions">
+            <button className="mobile-search-button" type="button" onClick={() => setSearchOpen(true)} aria-label="Abrir pesquisa global"><MagnifyingGlass size={21} /></button>
             <NavLink to="/app/notificacoes" className="notification-button" aria-label="Notificações"><Bell size={21} /><span /></NavLink>
             <button className="user-menu" type="button" aria-expanded={userOpen} onClick={() => setUserOpen(!userOpen)}>
               <span className="avatar">{initials}</span>
@@ -113,7 +144,8 @@ export function AppLayout() {
             <button className="logout-button" onClick={logout} title="Sair" aria-label="Sair"><SignOut size={20} /></button>
           </div>
         </header>
-        <main className="page-content"><Outlet /></main>
+        <main className="page-content">{restrictedRoute ? <section className="access-denied"><span><ShieldCheck size={30} /></span><p className="eyebrow">Acesso por perfil</p><h1>Este módulo não faz parte da sua área de trabalho.</h1><p>O menu foi personalizado para as responsabilidades do perfil <strong>{session?.role}</strong>. Se precisar consultar este conteúdo, solicite a liberação ao gestor da conta.</p><Link className="button button--primary" to="/app/dashboard">Voltar para a visão geral</Link></section> : <Outlet />}</main>
+        <nav className="mobile-bottom-nav" aria-label="Atalhos principais">{mobileItems.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} end={to === '/app/dashboard'}><Icon size={21} /><span>{label === 'Visão geral' ? 'Início' : label}</span></NavLink>)}<button type="button" onClick={() => setMobileOpen(true)}><SidebarSimple size={21} /><span>Mais</span></button></nav>
         <ContextHelp />
       </div>
     </div>

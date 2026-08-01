@@ -17,6 +17,14 @@ As etapas deste documento já possuem uma implementação funcional no frontend,
 - tabelas convertidas em cartões no celular e ações principais adaptadas ao toque;
 - relatórios configuráveis, prévia, exportação CSV e mapa demonstrativo;
 - animações de entrada, scroll reveal, microinterações e respeito à redução de movimento.
+- navegação adaptada ao perfil, bloqueio explicativo de módulos e atalhos fixos no celular;
+- tabelas com ordenação, seleção e ações em lote, paginação e escolha de colunas;
+- busca global navegável pelo teclado, com histórico de acessos recentes;
+- dashboard personalizável por período e por blocos de informação;
+- agenda mensal ou em lista, detalhes dos compromissos e navegação entre meses;
+- notificações por categoria, com adiamento e arquivamento;
+- formulário com prevenção de duplicidade, preenchimento de CNPJ, progresso de upload e saída segura;
+- seção de dores da landing page apresentada em cards responsivos, sem rolagem horizontal.
 
 Recursos que dependem de dados reais, envio de e-mails, permissões do servidor, geocodificação ou geração oficial de documentos serão ativados na integração descrita em `INTEGRACAO_BACKEND.md`.
 

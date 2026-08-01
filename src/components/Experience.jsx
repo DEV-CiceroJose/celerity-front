@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
-  ArrowRight, Buildings, CalendarCheck, Check, ClipboardText, Drop, FileText,
+  ArrowRight, Buildings, CalendarCheck, Check, ClipboardText, Clock, Drop, FileText,
   MagnifyingGlass, ShieldCheck, Sparkle, Warning, WifiSlash, X,
 } from '@phosphor-icons/react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { mockRows } from '../data/mockData'
 import { Button, StatusBadge } from './ui'
 
@@ -21,6 +21,9 @@ const labelByResource = {
 
 export function GlobalSearch({ open, onClose }) {
   const [query, setQuery] = useState('')
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [recent, setRecent] = useState(() => JSON.parse(localStorage.getItem('celerity_recent_searches') || '[]'))
+  const navigate = useNavigate()
   const results = useMemo(() => {
     if (query.trim().length < 2) return []
     const normalized = query.toLowerCase()
@@ -33,9 +36,24 @@ export function GlobalSearch({ open, onClose }) {
   useEffect(() => {
     if (!open) setQuery('')
   }, [open])
+  useEffect(() => setActiveIndex(0), [query])
+
+  const remember = (row) => {
+    const entry = { resource: row.resource, id: row.id, href: row.href, primary: row.primary, secondary: row.secondary, status: row.status }
+    const next = [entry, ...recent.filter((item) => item.href !== row.href)].slice(0, 4)
+    setRecent(next)
+    localStorage.setItem('celerity_recent_searches', JSON.stringify(next))
+  }
+  const openResult = (row) => { remember(row); onClose() }
+  const onSearchKeyDown = (event) => {
+    if (!results.length) return
+    if (event.key === 'ArrowDown') { event.preventDefault(); setActiveIndex((current) => (current + 1) % results.length) }
+    if (event.key === 'ArrowUp') { event.preventDefault(); setActiveIndex((current) => (current - 1 + results.length) % results.length) }
+    if (event.key === 'Enter') { event.preventDefault(); const row = results[activeIndex]; remember(row); onClose(); navigate(row.href) }
+  }
 
   if (!open) return null
-  return <div className="command-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="command-palette" role="dialog" aria-modal="true" aria-label="Pesquisa global"><div className="command-input"><MagnifyingGlass size={22} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Digite uma empresa, processo, licença ou documento" /><button onClick={onClose} aria-label="Fechar pesquisa"><X size={20} /></button></div>{query.length < 2 ? <div className="command-empty"><Sparkle size={26} /><strong>Encontre qualquer informação rapidamente</strong><span>Digite pelo menos dois caracteres para pesquisar em todos os módulos.</span></div> : results.length ? <div className="command-results">{results.map((row) => <Link to={row.href} key={`${row.resource}-${row.id}`} onClick={onClose}><span className="command-result__type">{labelByResource[row.resource]}</span><div><strong>{row.primary}</strong><small>{row.secondary}</small></div><StatusBadge>{row.status}</StatusBadge><ArrowRight size={17} /></Link>)}</div> : <div className="command-empty"><MagnifyingGlass size={26} /><strong>Nenhum resultado encontrado</strong><span>Revise o termo pesquisado ou abra um módulo para usar filtros avançados.</span></div>}<footer><span><kbd>ESC</kbd> fechar</span><span><kbd>↵</kbd> abrir resultado</span></footer></section></div>
+  return <div className="command-overlay" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && onClose()}><section className="command-palette" role="dialog" aria-modal="true" aria-label="Pesquisa global"><div className="command-input"><MagnifyingGlass size={22} /><input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={onSearchKeyDown} placeholder="Digite uma empresa, processo, licença ou documento" aria-activedescendant={results[activeIndex] ? `search-result-${results[activeIndex].resource}-${results[activeIndex].id}` : undefined} /><button onClick={onClose} aria-label="Fechar pesquisa"><X size={20} /></button></div>{query.length < 2 ? recent.length ? <div className="command-recent"><p><Clock size={17} />Acessados recentemente</p>{recent.map((row) => <Link to={row.href} key={row.href} onClick={() => openResult(row)}><div><strong>{row.primary}</strong><small>{row.secondary}</small></div><ArrowRight size={17} /></Link>)}</div> : <div className="command-empty"><Sparkle size={26} /><strong>Encontre qualquer informação rapidamente</strong><span>Digite pelo menos dois caracteres para pesquisar em todos os módulos.</span></div> : results.length ? <div className="command-results">{results.map((row, index) => <Link id={`search-result-${row.resource}-${row.id}`} className={activeIndex === index ? 'active' : ''} to={row.href} key={`${row.resource}-${row.id}`} onMouseEnter={() => setActiveIndex(index)} onClick={() => openResult(row)}><span className="command-result__type">{labelByResource[row.resource]}</span><div><strong>{row.primary}</strong><small>{row.secondary}</small></div><StatusBadge>{row.status}</StatusBadge><ArrowRight size={17} /></Link>)}</div> : <div className="command-empty"><MagnifyingGlass size={26} /><strong>Nenhum resultado encontrado</strong><span>Revise o termo pesquisado ou abra um módulo para usar filtros avançados.</span></div>}<footer><span><kbd>↑↓</kbd> navegar</span><span><kbd>ESC</kbd> fechar</span><span><kbd>↵</kbd> abrir resultado</span></footer></section></div>
 }
 
 const onboardingByRole = {
@@ -62,8 +80,14 @@ export function Onboarding({ session }) {
   const steps = onboardingByRole[session?.role] || onboardingByRole.Gestor
   const [title, text, Icon] = steps[step]
   const finish = () => { localStorage.setItem('celerity_onboarding_done', 'true'); setOpen(false) }
+  useEffect(() => {
+    if (!open) return undefined
+    const closeOnEscape = (event) => { if (event.key === 'Escape') { localStorage.setItem('celerity_onboarding_done', 'true'); setOpen(false) } }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [open])
   if (!open) return null
-  return <div className="onboarding-overlay"><section className="onboarding-modal" role="dialog" aria-modal="true" aria-label="Primeiros passos"><button className="onboarding-close" onClick={finish} aria-label="Pular apresentação"><X size={20} /></button><div className="onboarding-visual"><span><Icon size={38} /></span><small>CELERITY AMBIENTAL</small></div><div className="onboarding-copy"><p className="eyebrow">Passo {step + 1} de {steps.length}</p><h2>{title}</h2><p>{text}</p><div className="onboarding-dots">{steps.map((item, index) => <i key={item[0]} className={index === step ? 'active' : ''} />)}</div><div className="onboarding-actions"><button onClick={finish}>Pular</button><Button onClick={() => step === steps.length - 1 ? finish() : setStep(step + 1)}>{step === steps.length - 1 ? 'Começar agora' : 'Continuar'} <ArrowRight size={17} /></Button></div></div></section></div>
+  return <div className="onboarding-overlay"><section className="onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="onboarding-title"><button className="onboarding-close" onClick={finish} aria-label="Pular apresentação"><X size={20} /></button><div className="onboarding-visual"><span><Icon size={38} /></span><small>CELERITY AMBIENTAL</small></div><div className="onboarding-copy"><p className="eyebrow">Passo {step + 1} de {steps.length}</p><h2 id="onboarding-title">{title}</h2><p>{text}</p><div className="onboarding-dots">{steps.map((item, index) => <i key={item[0]} className={index === step ? 'active' : ''} />)}</div><div className="onboarding-actions"><button onClick={finish}>Pular</button><Button autoFocus onClick={() => step === steps.length - 1 ? finish() : setStep(step + 1)}>{step === steps.length - 1 ? 'Começar agora' : 'Continuar'} <ArrowRight size={17} /></Button></div></div></section></div>
 }
 
 export function NetworkBanner() {
