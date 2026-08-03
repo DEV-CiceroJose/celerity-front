@@ -36,9 +36,9 @@ export function LandingPage() {
           <div className="container hero__grid">
             <div className="hero__copy">
               <p className="eyebrow eyebrow--green">Consultoria e gestão ambiental integrada</p>
-              <h1>Sua operação não pode depender de prazos na memória.</h1>
-              <p className="hero__lead">Licenças vencidas, exigências sem resposta e documentos dispersos geram retrabalho, insegurança e risco. A Celerity organiza a rotina ambiental para sua equipe agir antes que o problema apareça.</p>
-              <div className="hero__actions"><Button as={Link} to="/cadastro" icon={ArrowRight}>Quero organizar minha operação</Button><Button as="a" href="#solucao" variant="dark-outline">Entender a solução</Button></div>
+              <h1>Conformidade ambiental deixa de ser memória e vira processo.</h1>
+              <p className="hero__lead">A Celerity reúne empresas, processos, licenças, poços, exigências e prazos em uma estrutura única — com responsáveis definidos e evidências vinculadas a cada obrigação.</p>
+              <div className="hero__actions"><Button as={Link} to="/cadastro" icon={ArrowRight}>Quero organizar minha operação</Button><Button as="a" href="#solucao" variant="dark-outline">Ver como funciona</Button></div>
               <div className="hero__proof"><ShieldCheck size={21} /><span>Consultoria técnica, acompanhamento próximo e informação confiável.</span></div>
             </div>
             <div className="hero__visual">
@@ -92,7 +92,7 @@ export function LandingPage() {
         <section className="cta-section" id="contato"><div className="container cta-section__inner"><div><p className="eyebrow eyebrow--green">O próximo prazo não precisa virar urgência</p><h2>Transforme sua rotina ambiental em uma operação previsível.</h2><p>Converse com a Celerity e descubra como organizar processos, responsabilidades e vencimentos da sua empresa.</p></div><Button as={Link} to="/cadastro" icon={ArrowRight}>Quero falar com a Celerity</Button></div></section>
       </main>
 
-      <footer className="landing-footer"><div className="container"><Brand light /><p>Consultoria, assessoria e projetos ambientais.</p><span>© 2026 Celerity Ambiental</span></div></footer>
+      <footer className="landing-footer"><div className="container"><Brand light /><p>Consultoria, assessoria e projetos ambientais.</p><span>© 2026 Celerity Ambiental · DEV-CiceroJose</span></div></footer>
     </div>
   )
 }

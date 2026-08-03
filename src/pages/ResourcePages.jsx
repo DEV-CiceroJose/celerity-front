@@ -3,7 +3,7 @@ import {
   ArrowLeft, BookmarkSimple, CalendarBlank, ChatCircleText, Check, Clock,
   DownloadSimple, FileText, FloppyDisk, Funnel, Paperclip, Plus, UploadSimple, UserCircle,
 } from '@phosphor-icons/react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ErrorState, LoadingState, PermissionNotice, SuccessToast } from '../components/Experience'
 import { ResourceTable } from '../components/ResourceTable'
 import { Breadcrumb, Button, EmptyState, Field, FilterBar, PageHeader, StatusBadge } from '../components/ui'
@@ -12,6 +12,7 @@ import { authService } from '../services/authService'
 
 const people = ['Mariana Costa', 'Ana Beatriz', 'Carlos Mendes', 'Rafael Lima']
 const companyOptions = ['Eco Norte Indústria Ltda.', 'Construtora Horizonte S.A.', 'Agrovale Empreendimentos', 'Águas do Sertão SPE']
+const companyCnpjs = { 'Eco Norte Indústria Ltda.': '12.345.678/0001-90', 'Construtora Horizonte S.A.': '41.052.930/0001-11', 'Agrovale Empreendimentos': '09.713.884/0001-62', 'Águas do Sertão SPE': '32.845.109/0001-04' }
 const licenseTypes = ['LP', 'LI', 'LO', 'LS', 'ASV', 'AUT', 'RLO', 'LI + LO', 'LP + LI', 'LP + LI + LO']
 const processStatuses = ['Em andamento', 'Em análise', 'Em exigência', 'Deferido', 'Indeferido', 'Prazo expirado', 'Licença liberada']
 
@@ -86,10 +87,10 @@ function InputForField({ definition, value, error, onChange }) {
     if (definition.type === 'currency') return onChange(maskCurrency(nextValue))
     onChange(nextValue)
   }
-  return <Field label={definition.label} required={definition.required} error={error} hint={definition.hint} className={definition.full ? 'field--full' : ''}>{({ id }) => {
-    if (definition.type === 'select') return <select id={id} value={value || ''} onChange={(event) => update(event.target.value)}><option value="">Selecione</option>{definition.options.map((option) => <option key={option}>{option}</option>)}</select>
-    if (definition.type === 'textarea') return <textarea id={id} rows="5" value={value || ''} onChange={(event) => update(event.target.value)} placeholder={definition.placeholder} />
-    return <input id={id} type={['date', 'email'].includes(definition.type) ? definition.type : 'text'} value={value || ''} onChange={(event) => update(event.target.value)} placeholder={definition.placeholder || (definition.type === 'cnpj' ? '00.000.000/0000-00' : definition.type === 'phone' ? '(85) 99999-0000' : '')} />
+  return <Field label={definition.label} required={definition.required} error={error} hint={definition.hint} className={definition.full ? 'field--full' : ''}>{({ id, ...accessibility }) => {
+    if (definition.type === 'select') return <select id={id} {...accessibility} value={value || ''} onChange={(event) => update(event.target.value)}><option value="">Selecione</option>{definition.options.map((option) => <option key={option}>{option}</option>)}</select>
+    if (definition.type === 'textarea') return <textarea id={id} {...accessibility} rows="5" value={value || ''} onChange={(event) => update(event.target.value)} placeholder={definition.placeholder} />
+    return <input id={id} {...accessibility} type={['date', 'email'].includes(definition.type) ? definition.type : 'text'} value={value || ''} onChange={(event) => update(event.target.value)} placeholder={definition.placeholder || (definition.type === 'cnpj' ? '00.000.000/0000-00' : definition.type === 'phone' ? '(85) 99999-0000' : '')} />
   }}</Field>
 }
 
@@ -99,9 +100,10 @@ export function ResourceListPage({ resource, tab }) {
   const readOnly = session?.role === 'Somente leitura'
   const storageKey = `celerity_filters_${resource}`
   const initialFilters = JSON.parse(localStorage.getItem(storageKey) || '{}')
-  const [query, setQuery] = useState(initialFilters.query || '')
-  const [status, setStatus] = useState(initialFilters.status || '')
-  const [owner, setOwner] = useState(initialFilters.owner || '')
+  const [searchParams] = useSearchParams()
+  const [query, setQuery] = useState(searchParams.get('query') || initialFilters.query || '')
+  const [status, setStatus] = useState(searchParams.get('status') || initialFilters.status || '')
+  const [owner, setOwner] = useState(searchParams.get('owner') || initialFilters.owner || '')
   const [filterOpen, setFilterOpen] = useState(false)
   const [viewName, setViewName] = useState('')
   const [savedViews, setSavedViews] = useState(() => JSON.parse(localStorage.getItem(`celerity_views_${resource}`) || '[]'))
@@ -167,6 +169,8 @@ export function ResourceFormPage({ resource }) {
   const [errors, setErrors] = useState({})
   const [saved, setSaved] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [leaveOpen, setLeaveOpen] = useState(false)
+  const [upload, setUpload] = useState({ name: '', progress: 0 })
   const readOnly = authService.getSession()?.role === 'Somente leitura'
 
   useEffect(() => {
@@ -174,8 +178,21 @@ export function ResourceFormPage({ resource }) {
     const timer = window.setTimeout(() => localStorage.setItem(draftKey, JSON.stringify(values)), 450)
     return () => window.clearTimeout(timer)
   }, [values, dirty, draftKey])
+  useEffect(() => {
+    const warn = (event) => { if (!dirty || saved) return; event.preventDefault(); event.returnValue = '' }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [dirty, saved])
 
-  const update = (name, value) => { setValues((current) => ({ ...current, [name]: value })); setErrors((current) => ({ ...current, [name]: '' })); setDirty(true) }
+  const update = (name, value) => {
+    setValues((current) => ({ ...current, [name]: value, ...(name === 'empresa' && companyCnpjs[value] && schema.some((section) => section.fields.some((item) => item.name === 'cnpj')) ? { cnpj: companyCnpjs[value] } : {}) }))
+    setErrors((current) => {
+      const next = { ...current, [name]: '', ...(name === 'empresa' ? { cnpj: '' } : {}) }
+      if (name === 'numero' && !editing && ['processos', 'pocos'].includes(resource) && value && (mockRows[resource] || []).some((row) => row.primary.toLowerCase().includes(value.toLowerCase()))) next.numero = 'Já existe um registro com este número.'
+      return next
+    })
+    setDirty(true)
+  }
   const validate = () => {
     const next = {}
     schema.flatMap((section) => section.fields).forEach((item) => {
@@ -195,6 +212,17 @@ export function ResourceFormPage({ resource }) {
     setSaved(true)
     window.setTimeout(() => navigate(`/app/${resource}`), 850)
   }
+  const selectFiles = (event) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+    setUpload({ name: file.name, progress: 18 })
+    let progress = 18
+    const timer = window.setInterval(() => {
+      progress = Math.min(100, progress + 17)
+      setUpload({ name: file.name, progress })
+      if (progress === 100) window.clearInterval(timer)
+    }, 180)
+  }
 
   if (readOnly) return <><Breadcrumb items={[config.title, 'Acesso restrito']} /><PageHeader title="Edição indisponível para este perfil" description="Seu acesso permite consultar as informações, sem alterar os registros." /><PermissionNotice readOnly /><Button as={Link} to={`/app/${resource}`} variant="secondary" icon={ArrowLeft}>Voltar para {config.title.toLowerCase()}</Button></>
 
@@ -202,11 +230,13 @@ export function ResourceFormPage({ resource }) {
     <Breadcrumb items={[config.title, editing ? `Editar ${config.singular}` : `Novo ${config.singular}`]} />
     <PageHeader title={`${editing ? 'Editar' : 'Novo'} ${config.singular}`} description={`Formulário específico de ${config.singular}, com validação e salvamento de rascunho.`} />
     {saved && <div className="success-banner"><Check size={19} weight="bold" /> Informações validadas e salvas com sucesso.</div>}
+    {Object.values(errors).filter(Boolean).length > 0 && <div className="form-error-summary" role="alert"><strong>Revise {Object.values(errors).filter(Boolean).length} campo(s) antes de continuar.</strong><span>O primeiro campo com problema foi destacado e recebeu o foco.</span></div>}
     <form className="resource-form" onSubmit={submit} noValidate>
       {schema.map((section, index) => <section className="form-section" key={section.title}><div className="form-section__heading"><span>{String(index + 1).padStart(2, '0')}</span><div><h2>{section.title}</h2><p>{section.description}</p></div></div><div className="form-section__fields"><div className="dynamic-form-grid">{section.fields.map((definition) => <InputForField key={definition.name} definition={definition} value={values[definition.name]} error={errors[definition.name]} onChange={(value) => update(definition.name, value)} />)}</div></div></section>)}
-      {resource !== 'usuarios' && <section className="form-section"><div className="form-section__heading"><span>{String(schema.length + 1).padStart(2, '0')}</span><div><h2>Documentos</h2><p>Anexe evidências e arquivos relacionados.</p></div></div><div className="form-section__fields"><label className="file-drop"><UploadSimple size={26} /><strong>Arraste os arquivos ou clique para selecionar</strong><span>PDF, DOCX, XLSX ou imagens · máximo de 20 MB</span><input type="file" multiple /></label></div></section>}
-      <div className="form-actions"><span className="draft-status">{dirty ? 'Rascunho salvo automaticamente' : 'Nenhuma alteração pendente'}</span><Button type="button" variant="secondary" onClick={() => navigate(-1)}>Cancelar</Button><Button icon={FloppyDisk}>Salvar {config.singular}</Button></div>
+      {resource !== 'usuarios' && <section className="form-section"><div className="form-section__heading"><span>{String(schema.length + 1).padStart(2, '0')}</span><div><h2>Documentos</h2><p>Anexe evidências e arquivos relacionados.</p></div></div><div className="form-section__fields"><label className="file-drop"><UploadSimple size={26} /><strong>Arraste os arquivos ou clique para selecionar</strong><span>PDF, DOCX, XLSX ou imagens · máximo de 20 MB</span><input type="file" multiple onChange={selectFiles} /></label>{upload.name && <div className="upload-progress"><div><FileText size={19} /><span><strong>{upload.name}</strong><small>{upload.progress === 100 ? 'Arquivo pronto para salvar' : `Enviando · ${upload.progress}%`}</small></span></div><i><span style={{ width: `${upload.progress}%` }} /></i></div>}</div></section>}
+      <div className="form-actions"><span className="draft-status">{dirty ? 'Rascunho salvo automaticamente' : 'Nenhuma alteração pendente'}</span><Button type="button" variant="secondary" onClick={() => dirty ? setLeaveOpen(true) : navigate(`/app/${resource}`)}>Cancelar</Button><Button icon={FloppyDisk}>Salvar {config.singular}</Button></div>
     </form>
+    {leaveOpen && <div className="confirm-overlay"><section className="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="leave-title"><span><Clock size={24} /></span><h3 id="leave-title">Sair deste formulário?</h3><p>As alterações ainda não foram concluídas. O rascunho ficará salvo neste dispositivo para você continuar depois.</p><div><button onClick={() => setLeaveOpen(false)}>Continuar editando</button><button className="confirm-danger" onClick={() => navigate(`/app/${resource}`)}>Sair do formulário</button></div></section></div>}
   </>
 }
 
@@ -258,14 +288,30 @@ const calendarEvents = [
 ]
 
 export function CalendarPage() {
-  const days = Array.from({ length: 35 }, (_, index) => index - 2)
   const [types, setTypes] = useState(['licenca', 'exigencia', 'pagamento', 'tarefa'])
+  const [currentDate, setCurrentDate] = useState(new Date(2026, 7, 1))
+  const [view, setView] = useState('month')
+  const [selectedEvent, setSelectedEvent] = useState(null)
   const toggle = (type) => setTypes((current) => current.includes(type) ? current.filter((item) => item !== type) : [...current, type])
-  const visibleEvents = calendarEvents.filter((event) => types.includes(event.type))
+  const isAugust2026 = currentDate.getFullYear() === 2026 && currentDate.getMonth() === 7
+  const visibleEvents = isAugust2026 ? calendarEvents.filter((event) => types.includes(event.type)) : []
+  const monthTitle = currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }).replace(/^./, (letter) => letter.toUpperCase())
+  const monthShort = currentDate.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '').toUpperCase()
+  const firstWeekday = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay()
+  const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate()
+  const previousMonthDays = new Date(currentDate.getFullYear(), currentDate.getMonth(), 0).getDate()
+  const calendarDays = Array.from({ length: 42 }, (_, index) => {
+    const day = index - firstWeekday + 1
+    if (day < 1) return { day: previousMonthDays + day, muted: true }
+    if (day > daysInMonth) return { day: day - daysInMonth, muted: true }
+    return { day, muted: false }
+  })
+  const moveMonth = (amount) => setCurrentDate((current) => new Date(current.getFullYear(), current.getMonth() + amount, 1))
   const exportCalendar = () => {
     const items = visibleEvents.map((event) => `BEGIN:VEVENT\nDTSTART;VALUE=DATE:202608${String(event.day).padStart(2, '0')}\nDTEND;VALUE=DATE:202608${String(event.day + 1).padStart(2, '0')}\nSUMMARY:${event.title}\nDESCRIPTION:${event.company} - ${event.short}\nEND:VEVENT`).join('\n')
     const url = URL.createObjectURL(new Blob([`BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Celerity Ambiental//Agenda//PT-BR\n${items}\nEND:VCALENDAR`], { type: 'text/calendar' }))
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = 'agenda-celerity-agosto-2026.ics'; anchor.click(); URL.revokeObjectURL(url)
   }
-  return <><Breadcrumb items={['Calendário operacional']} /><PageHeader title="Calendário operacional" description="Licenças, exigências, pagamentos e tarefas em uma única agenda." actionLabel="Novo compromisso" actionTo="/app/licencas/novo" secondary={<Button variant="secondary" icon={DownloadSimple} onClick={exportCalendar}>Exportar agenda</Button>} /><div className="calendar-filters">{[['licenca', 'Licenças'], ['exigencia', 'Exigências'], ['pagamento', 'Pagamentos'], ['tarefa', 'Tarefas']].map(([type, label]) => <button key={type} className={types.includes(type) ? `active type-${type}` : ''} onClick={() => toggle(type)}><i />{label}</button>)}</div><div className="unified-calendar"><section className="panel calendar-panel"><div className="calendar-toolbar"><button aria-label="Mês anterior">‹</button><h2>Agosto de 2026</h2><button aria-label="Próximo mês">›</button></div><div className="calendar-week">{['DOM','SEG','TER','QUA','QUI','SEX','SÁB'].map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{days.map((day, index) => { const realDay = day < 1 ? 31 + day : day > 31 ? day - 31 : day; const events = day > 0 && day <= 31 ? visibleEvents.filter((event) => event.day === day) : []; return <div key={index} className={day < 1 || day > 31 ? 'muted' : ''}><span>{realDay}</span>{events.map((event) => <small key={event.short} className={`event event--${event.type}`}>{event.short}</small>)}</div> })}</div></section><aside className="panel calendar-agenda"><p className="eyebrow">Próximos compromissos</p><h2>Agosto</h2>{visibleEvents.sort((a, b) => a.day - b.day).map((event) => <article key={`${event.day}-${event.short}`}><span className={`agenda-date type-${event.type}`}><strong>{String(event.day).padStart(2, '0')}</strong><small>AGO</small></span><div><strong>{event.title}</strong><span>{event.company}</span><small>{event.type}</small></div></article>)}</aside></div></>
+  const eventResource = selectedEvent ? { licenca: 'licencas', exigencia: 'exigencias', pagamento: 'pagamentos', tarefa: 'calendario' }[selectedEvent.type] : 'calendario'
+  return <><Breadcrumb items={['Calendário operacional']} /><PageHeader title="Calendário operacional" description="Licenças, exigências, pagamentos e tarefas em uma única agenda." actionLabel="Novo compromisso" actionTo="/app/licencas/novo" secondary={<Button variant="secondary" icon={DownloadSimple} onClick={exportCalendar}>Exportar agenda</Button>} /><div className="calendar-control-row"><div className="calendar-filters">{[['licenca', 'Licenças'], ['exigencia', 'Exigências'], ['pagamento', 'Pagamentos'], ['tarefa', 'Tarefas']].map(([type, label]) => <button key={type} className={types.includes(type) ? `active type-${type}` : ''} onClick={() => toggle(type)}><i />{label}</button>)}</div><div className="calendar-view-toggle"><button className={view === 'month' ? 'active' : ''} onClick={() => setView('month')}>Mês</button><button className={view === 'list' ? 'active' : ''} onClick={() => setView('list')}>Lista</button></div></div><div className={`unified-calendar ${view === 'list' ? 'unified-calendar--list' : ''}`}>{view === 'month' ? <section className="panel calendar-panel"><div className="calendar-toolbar"><div><button aria-label="Mês anterior" onClick={() => moveMonth(-1)}>‹</button><button aria-label="Próximo mês" onClick={() => moveMonth(1)}>›</button></div><h2>{monthTitle}</h2><button className="calendar-today" onClick={() => setCurrentDate(new Date(2026, 7, 1))}>Hoje</button></div><div className="calendar-week">{['DOM','SEG','TER','QUA','QUI','SEX','SÁB'].map((day) => <span key={day}>{day}</span>)}</div><div className="calendar-grid">{calendarDays.map((item, index) => { const events = !item.muted ? visibleEvents.filter((event) => event.day === item.day) : []; return <div key={index} className={item.muted ? 'muted' : ''}><span>{item.day}</span>{events.map((event) => <button key={event.short} className={`event event--${event.type}`} onClick={() => setSelectedEvent(event)}>{event.short}</button>)}</div> })}</div></section> : <section className="panel calendar-list-view"><div className="panel__header"><div><p className="eyebrow">Agenda detalhada</p><h2>{monthTitle}</h2></div></div>{visibleEvents.length ? visibleEvents.map((event) => <button key={`${event.day}-${event.short}`} onClick={() => setSelectedEvent(event)}><span className={`agenda-date type-${event.type}`}><strong>{String(event.day).padStart(2, '0')}</strong><small>{monthShort}</small></span><div><strong>{event.title}</strong><span>{event.company}</span><small>{event.short}</small></div><StatusBadge>{event.type}</StatusBadge><ArrowLeft size={17} /></button>) : <EmptyState title="Nenhum compromisso neste mês" />}</section>}<aside className="panel calendar-agenda"><p className="eyebrow">Próximos compromissos</p><h2>{monthTitle}</h2>{visibleEvents.length ? visibleEvents.map((event) => <button key={`${event.day}-${event.short}`} onClick={() => setSelectedEvent(event)}><span className={`agenda-date type-${event.type}`}><strong>{String(event.day).padStart(2, '0')}</strong><small>{monthShort}</small></span><div><strong>{event.title}</strong><span>{event.company}</span><small>{event.type}</small></div></button>) : <p className="calendar-empty">Nenhum compromisso para os filtros selecionados.</p>}</aside></div>{selectedEvent && <div className="confirm-overlay"><section className="event-detail-card" role="dialog" aria-modal="true" aria-labelledby="event-title"><button className="event-close" onClick={() => setSelectedEvent(null)}>×</button><span className={`agenda-date type-${selectedEvent.type}`}><strong>{String(selectedEvent.day).padStart(2, '0')}</strong><small>AGO</small></span><p className="eyebrow">{selectedEvent.type}</p><h2 id="event-title">{selectedEvent.title}</h2><p>{selectedEvent.company}</p><dl><div><dt>Referência</dt><dd>{selectedEvent.short}</dd></div><div><dt>Responsável</dt><dd>Mariana Costa</dd></div><div><dt>Lembrete</dt><dd>7 dias antes</dd></div></dl><div><Button variant="secondary" onClick={() => setSelectedEvent(null)}>Fechar</Button><Button as={Link} to={`/app/${eventResource}`}>Abrir registro</Button></div></section></div>}</>
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { ArrowRight, Bell, BookOpen, ChartBar, Check, ChatCircleText, DownloadSimple, FileCsv, FilePdf, Gear, Lifebuoy, Lock, MagnifyingGlass, MapPin, Palette, PlayCircle, ShieldCheck, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
+import { Archive, ArrowRight, Bell, BookOpen, ChartBar, Check, ChatCircleText, Clock, DownloadSimple, FileCsv, FilePdf, Gear, Lifebuoy, Lock, MagnifyingGlass, MapPin, Palette, PlayCircle, ShieldCheck, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { SuccessToast } from '../components/Experience'
 import { Breadcrumb, Button, PageHeader, StatusBadge } from '../components/ui'
@@ -85,15 +85,24 @@ export function HelpPage() {
 
 export function NotificationsPage() {
   const initialAlerts = [
-    { id: 1, title: 'Prazo vence em 3 dias', text: 'A exigência do processo SRH 2026/001395 precisa de atenção.', time: 'há 12 minutos', read: false, href: '/app/exigencias/1' },
-    { id: 2, title: 'Licença próxima do vencimento', text: 'LS nº 2025-0841 vence em 7 dias.', time: 'há 2 horas', read: false, href: '/app/licencas/2' },
-    { id: 3, title: 'Pagamento confirmado', text: 'Solicitação nº 2026-0861 foi marcada como paga.', time: 'ontem, 16:40', read: true, href: '/app/pagamentos/3' },
+    { id: 1, category: 'Prazos', title: 'Prazo vence em 3 dias', text: 'A exigência do processo SRH 2026/001395 precisa de atenção.', time: 'há 12 minutos', read: false, href: '/app/exigencias/701' },
+    { id: 2, category: 'Licenças', title: 'Licença próxima do vencimento', text: 'LS nº 2025-0841 vence em 7 dias.', time: 'há 2 horas', read: false, href: '/app/licencas/302' },
+    { id: 3, category: 'Pagamentos', title: 'Pagamento confirmado', text: 'Solicitação nº 2026-0861 foi marcada como paga.', time: 'ontem, 16:40', read: true, href: '/app/pagamentos/413' },
   ]
-  const [alerts, setAlerts] = useState(() => JSON.parse(localStorage.getItem('celerity_notifications') || 'null') || initialAlerts)
+  const [alerts, setAlerts] = useState(() => {
+    const stored = JSON.parse(localStorage.getItem('celerity_notifications') || 'null') || initialAlerts
+    const knownLinks = { 1: '/app/exigencias/701', 2: '/app/licencas/302', 3: '/app/pagamentos/413' }
+    return stored.map((item) => ({ ...item, href: knownLinks[item.id] || item.href, category: item.category || (item.title.includes('Licença') ? 'Licenças' : item.title.includes('Pagamento') ? 'Pagamentos' : 'Prazos') }))
+  })
+  const [filter, setFilter] = useState('Todas')
+  const [message, setMessage] = useState('')
   const persist = (next) => { setAlerts(next); localStorage.setItem('celerity_notifications', JSON.stringify(next)) }
   const markAll = () => persist(alerts.map((item) => ({ ...item, read: true })))
+  const visibleAlerts = alerts.filter((item) => filter === 'Todas' || item.category === filter)
   const unread = alerts.filter((item) => !item.read).length
-  return <><Breadcrumb items={['Notificações']} /><PageHeader title="Notificações" description={`${unread ? `${unread} atualização(ões) ainda não lida(s).` : 'Você está em dia com todas as atualizações.'}`} secondary={unread ? <Button variant="secondary" icon={Check} onClick={markAll}>Marcar todas como lidas</Button> : undefined} /><div className="notification-tabs"><button className="active">Todas <span>{alerts.length}</span></button><Link to="/app/configuracoes">Preferências</Link></div><section className="panel notifications-list">{alerts.map((item) => <article key={item.id} className={!item.read ? 'unread' : ''}><span className="notification-icon"><Bell size={20} /></span><Link to={item.href} onClick={() => persist(alerts.map((alert) => alert.id === item.id ? { ...alert, read: true } : alert))}><h2>{item.title}</h2><p>{item.text}</p><time>{item.time}</time></Link><button className="notification-status" type="button" onClick={() => persist(alerts.map((alert) => alert.id === item.id ? { ...alert, read: !alert.read } : alert))} aria-label={item.read ? 'Marcar como não lida' : 'Marcar como lida'}><StatusBadge>{item.read ? 'Lida' : 'Nova'}</StatusBadge></button></article>)}</section></>
+  const postpone = (item) => { persist(alerts.map((alert) => alert.id === item.id ? { ...alert, time: 'adiada até amanhã, 09:00', read: true } : alert)); setMessage('Lembrete adiado até amanhã às 09:00.') }
+  const archive = (item) => { persist(alerts.filter((alert) => alert.id !== item.id)); setMessage('Notificação arquivada.') }
+  return <><Breadcrumb items={['Notificações']} /><PageHeader title="Notificações" description={`${unread ? `${unread} atualização(ões) ainda não lida(s).` : 'Você está em dia com todas as atualizações.'}`} secondary={unread ? <Button variant="secondary" icon={Check} onClick={markAll}>Marcar todas como lidas</Button> : undefined} /><div className="notification-tabs">{['Todas', 'Prazos', 'Licenças', 'Pagamentos'].map((category) => <button key={category} className={filter === category ? 'active' : ''} onClick={() => setFilter(category)}>{category}<span>{category === 'Todas' ? alerts.length : alerts.filter((item) => item.category === category).length}</span></button>)}<Link to="/app/configuracoes">Preferências</Link></div><section className="panel notifications-list">{visibleAlerts.length ? visibleAlerts.map((item) => <article key={item.id} className={!item.read ? 'unread' : ''}><span className="notification-icon"><Bell size={20} /></span><Link to={item.href} onClick={() => persist(alerts.map((alert) => alert.id === item.id ? { ...alert, read: true } : alert))}><small>{item.category}</small><h2>{item.title}</h2><p>{item.text}</p><time>{item.time}</time></Link><div className="notification-actions"><button type="button" onClick={() => postpone(item)} title="Adiar lembrete"><Clock size={17} /></button><button type="button" onClick={() => archive(item)} title="Arquivar"><Archive size={17} /></button><button className="notification-status" type="button" onClick={() => persist(alerts.map((alert) => alert.id === item.id ? { ...alert, read: !alert.read } : alert))} aria-label={item.read ? 'Marcar como não lida' : 'Marcar como lida'}><StatusBadge>{item.read ? 'Lida' : 'Nova'}</StatusBadge></button></div></article>) : <div className="notification-empty"><Bell size={28} /><strong>Nenhuma notificação nesta categoria</strong><span>Quando houver uma atualização, ela aparecerá aqui.</span></div>}</section><SuccessToast message={message} onClose={() => setMessage('')} /></>
 }
 
 export function NotFoundPage() {
