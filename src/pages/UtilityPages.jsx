@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Archive, ArrowRight, Bell, BookOpen, ChartBar, Check, ChatCircleText, Clock, DownloadSimple, FileCsv, FilePdf, Gear, Lifebuoy, Lock, MagnifyingGlass, MapPin, Palette, PlayCircle, ShieldCheck, SlidersHorizontal, UserCircle } from '@phosphor-icons/react'
+import { Archive, ArrowRight, Bell, BookOpen, ChartBar, Check, ChatCircleText, Clock, DownloadSimple, FileCsv, FilePdf, Gear, Lifebuoy, Lock, MagnifyingGlass, MapPin, Palette, PlayCircle, ShieldCheck, SlidersHorizontal, UserCircle } from '../components/icons'
 import { Link } from 'react-router-dom'
 import { SuccessToast } from '../components/Experience'
 import { Breadcrumb, Button, PageHeader, StatusBadge } from '../components/ui'

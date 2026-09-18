@@ -64,4 +64,12 @@ O procedimento completo, os endpoints sugeridos e a configuração do Django est
 
 ## Evolução da experiência
 
+### Landing institucional
+
+A landing reúne serviços técnicos, comparação antes/depois, poços e outorgas, uma jornada de três etapas e uma prévia interativa de processos, licenças e documentos. A prévia utiliza os mesmos registros demonstrativos de `src/data/mockData.js`; não são clientes reais ou resultados comerciais comprovados.
+
+O diagnóstico prepara um resumo no navegador, sem criar conta ou enviar dados à API. O visitante pode copiá-lo e compartilhar pelo canal de atendimento que utiliza. Para habilitar o botão **Continuar no WhatsApp**, configure `VITE_CONTACT_WHATSAPP` no `.env.local` com o número comercial confirmado (55 + DDD + número, somente dígitos) e reinicie o servidor ou gere um novo build. O visitante revisa e envia a mensagem no próprio WhatsApp. Não há captura automática de leads.
+
+Depoimentos, métricas de clientes e portfólio precisam de material real aprovado antes de publicação. Os links regionais apontam para páginas oficiais da SEMACE e da SRH; não representam integração ou vínculo institucional.
+
 As melhorias recomendadas de interface e experiência estão organizadas em [ROADMAP_UI_UX.md](./ROADMAP_UI_UX.md).

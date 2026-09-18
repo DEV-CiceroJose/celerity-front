@@ -1,5 +1,5 @@
 import { useId } from 'react'
-import { CaretRight, MagnifyingGlass, Plus, SlidersHorizontal } from '@phosphor-icons/react'
+import { CaretRight, MagnifyingGlass, Plus, SlidersHorizontal } from './icons'
 import { Link } from 'react-router-dom'
 
 export function Button({ as: Tag = 'button', className = '', variant = 'primary', icon: Icon, children, ...props }) {
