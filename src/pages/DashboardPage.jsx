@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowRight, CalendarBlank, ChartLineUp, Clock, DotsThree, FileText, Plus, SlidersHorizontal, Warning } from '@phosphor-icons/react'
+import { ArrowRight, CalendarBlank, ChartLineUp, Clock, DotsThree, FileText, Plus, SlidersHorizontal, Warning } from '../components/icons'
 import { Link } from 'react-router-dom'
 import { Breadcrumb, Button, PageHeader, StatusBadge } from '../components/ui'
 import { dashboardMetrics, mockRows } from '../data/mockData'

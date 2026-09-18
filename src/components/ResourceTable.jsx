@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Archive, ArrowsDownUp, CaretDown, CheckCircle, Columns, Copy, DotsThree, Eye, PencilSimple, UserSwitch } from '@phosphor-icons/react'
+import { Archive, ArrowsDownUp, CaretDown, CheckCircle, Columns, Copy, DotsThree, Eye, PencilSimple, UserSwitch } from './icons'
 import { Link, useLocation } from 'react-router-dom'
 import { EmptyState, StatusBadge } from './ui'
 

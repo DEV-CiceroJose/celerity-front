@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight, Buildings, CalendarCheck, Check, ClipboardText, Clock, Drop, FileText,
   MagnifyingGlass, ShieldCheck, Sparkle, Warning, WifiSlash, X,
-} from '@phosphor-icons/react'
+} from './icons'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { mockRows } from '../data/mockData'
 import { Button, StatusBadge } from './ui'

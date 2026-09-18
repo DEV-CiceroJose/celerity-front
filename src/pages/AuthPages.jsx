@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeSlash, LockKey, ShieldCheck } from '@phosphor-icons/react'
+import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeSlash, LockKey, ShieldCheck } from '../components/icons'
 import { Link, useNavigate } from 'react-router-dom'
 import { Brand } from '../components/Brand'
 import { Button, Field } from '../components/ui'

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowLeft, BookmarkSimple, CalendarBlank, ChatCircleText, Check, Clock,
   DownloadSimple, FileText, FloppyDisk, Funnel, Paperclip, Plus, UploadSimple, UserCircle,
-} from '@phosphor-icons/react'
+} from '../components/icons'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { ErrorState, LoadingState, PermissionNotice, SuccessToast } from '../components/Experience'
 import { ResourceTable } from '../components/ResourceTable'

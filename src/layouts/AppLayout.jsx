@@ -4,7 +4,7 @@ import {
   Bell, Buildings, CalendarDots, CaretDown, ChartPieSlice, ClipboardText, CreditCard,
   FileText, Gear, ListChecks, MagnifyingGlass, NotePencil, SidebarSimple, SignOut,
   ShieldCheck, UserCircle, UsersThree, WarningCircle, X,
-} from '@phosphor-icons/react'
+} from '../components/icons'
 import { Brand } from '../components/Brand'
 import { ContextHelp, GlobalSearch, NetworkBanner, Onboarding } from '../components/Experience'
 import { useScrollReveal } from '../hooks/useScrollReveal'
