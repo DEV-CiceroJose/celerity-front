@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h2>Detalhes</h2>
+
+<table class="table">
+
+<tr>
+<th>ID</th>
+<td>{{ poco.id }}</td>
+</tr>
+
+<tr>
+<th>Empresa</th>
+<td>{{ poco.empresa }}</td>
+</tr>
+
+<tr>
+<th>Processo</th>
+<td>{{ poco.numero_processo }}</td>
+</tr>
+
+<tr>
+<th>Situação</th>
+<td>{{ poco.situacao }}</td>
+</tr>
+
+<tr>
+<th>Data de Entrada</th>
+<td>{{ poco.data_entrada }}</td>
+</tr>
+
+<tr>
+<th>Responsável</th>
+<td>{{ poco.responsavel }}</td>
+</tr>
+
+<tr>
+<th>Tempo do Setor</th>
+<td>{{ poco.tempo_setor }}</td>
+</tr>
+
+<tr>
+<th>Prazo de Atendimento em Exigência</th>
+<td>{{ poco.prazo_atendimento_exigencia }}</td>
+</tr>
+
+</table>
+
+<a class="btn btn-warning"
+href="{% url 'editar_poco' poco.id %}">
+
+Editar
+
+</a>
+
+<a class="btn btn-danger"
+href="{% url 'deletar_poco' poco.id %}">
+
+Excluir
+
+</a>
+
+{% endblock %}

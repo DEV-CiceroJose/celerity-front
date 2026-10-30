@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}
+Poços
+{% endblock %}
+
+{% block content %}
+
+<h2>Poços</h2>
+
+<form method="get" class="mb-3">
+
+<input type="text"
+name="search"
+value="{{ search }}"
+placeholder="Pesquisar empresa"
+class="form-control w-25">
+
+</form>
+
+<a class="btn btn-success mb-3"
+href="{% url 'criar_poco' %}">
+
+Novo Poço
+
+</a>
+
+<table class="table table-striped">
+
+<thead>
+
+<tr>
+
+<th>Empresa</th>
+<th>Processo</th>
+<th>Situação</th>
+<th>Data de Entrada</th>
+<th>Responsável</th>
+<th>Tempo do Setor</th>
+<th>Prazo de Atendimento em Exigência</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for poco in pocos %}
+
+<tr>
+
+<td>{{ poco.empresa }}</td>
+<td>{{ poco.numero_processo }}</td>
+<td>{{ poco.situacao }}</td>
+<td>{{ poco.data_entrada }}</td>
+<td>{{ poco.responsavel }}</td>
+<td>{{ poco.tempo_setor }}</td>
+<td>{{ poco.prazo_atendimento_exigencia }}</td>
+
+<td>
+
+<a class="btn btn-primary btn-sm"
+href="{% url 'detalhe_poco' poco.id %}">
+
+Ver
+
+</a>
+
+<a class="btn btn-warning btn-sm"
+href="{% url 'editar_poco' poco.id %}">
+
+Editar
+
+</a>
+
+<a class="btn btn-danger btn-sm"
+href="{% url 'deletar_poco' poco.id %}">
+
+Excluir
+
+</a>
+
+</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+{% endblock %}

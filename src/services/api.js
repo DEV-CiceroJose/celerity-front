@@ -1,18 +1,26 @@
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
+const API_URL = import.meta.env.VITE_API_URL || '/api'
+
+function csrfToken() {
+  const cookie = document.cookie.split('; ').find((item) => item.startsWith('csrftoken='))
+  return cookie ? decodeURIComponent(cookie.slice('csrftoken='.length)) : ''
+}
+
+export async function ensureCsrfToken() {
+  await apiRequest('/csrf/')
+}
 
 export async function apiRequest(path, options = {}) {
   const response = await fetch(`${API_URL}${path}`, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...options.headers },
-    ...options,
+    ...options, credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken(), ...options.headers },
   })
-
-  if (response.status === 401) {
+  if (response.status === 401 && !path.startsWith('/auth/login/')) {
     window.dispatchEvent(new CustomEvent('celerity:session-expired'))
-    throw new Error('Sua sessão expirou.')
   }
-
-  if (!response.ok) throw new Error('Não foi possível concluir a solicitação.')
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}))
+    throw new Error(body.detail || 'Não foi possível concluir a solicitação.')
+  }
   return response.status === 204 ? null : response.json()
 }
 

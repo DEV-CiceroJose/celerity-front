@@ -1,3 +1,5 @@
+import { LocalTestEntry, LocalTestPage } from './pages/LocalTestPage'
+import { LicenseAlertsProvider } from './hooks/useLicenseAlerts'
 import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes } from 'react-router-dom'
 import { AppLayout } from './layouts/AppLayout'
@@ -22,7 +24,7 @@ const ReportsPage = lazy(() => import('./pages/UtilityPages').then((module) => (
 const SettingsPage = lazy(() => import('./pages/UtilityPages').then((module) => ({ default: module.SettingsPage })))
 
 function ProtectedRoute() {
-  return authService.getSession() ? <AppLayout /> : <Navigate to="/login" replace />
+  return authService.getSession() ? <LicenseAlertsProvider><AppLayout /></LicenseAlertsProvider> : <Navigate to="/login" replace />
 }
 
 const resources = ['empresas', 'processos', 'licencas', 'exigencias', 'pagamentos', 'assessoria', 'documentos', 'usuarios']
@@ -31,6 +33,7 @@ export default function App() {
   return (
     <Suspense fallback={<div className="route-loader" role="status"><i /><strong>Carregando sua experiência</strong><span>Organizando as informações do sistema…</span></div>}><Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/teste-local" element={<LocalTestEntry />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/cadastro" element={<RegisterPage />} />
       <Route path="/recuperar-senha" element={<ForgotPasswordPage />} />
@@ -39,6 +42,7 @@ export default function App() {
 
       <Route path="/app" element={<ProtectedRoute />}>
         <Route index element={<Navigate to="dashboard" replace />} />
+        <Route path="teste-alertas" element={<LocalTestPage />} />
         <Route path="dashboard" element={<DashboardPage />} />
         {resources.map((resource) => (
           <Route key={resource} path={resource}>

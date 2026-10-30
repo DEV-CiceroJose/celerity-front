@@ -15,7 +15,7 @@ export function StatusBadge({ children }) {
   const key = String(children).toLowerCase()
   let tone = 'neutral'
   if (/ativa|ativo|válida|pago|deferido|atendida|licenciado/.test(key)) tone = 'success'
-  if (/pendente|aguardando|7 dias|30 dias|andamento|análise|convite/.test(key)) tone = 'warning'
+  if (/pendente|aguardando|vence hoje|vence em|andamento|análise|convite/.test(key)) tone = 'warning'
   if (/vencida|vencido|excedido|indeferido/.test(key)) tone = 'danger'
   if (/exigência|atendimento/.test(key)) tone = 'info'
   const guidance = tone === 'danger' ? 'Situação crítica: revise o registro e defina uma ação.' : tone === 'warning' ? 'Atenção: acompanhe o prazo ou a próxima movimentação.' : tone === 'success' ? 'Situação regular ou concluída.' : tone === 'info' ? 'Registro em tratamento pela equipe.' : 'Situação informativa.'
