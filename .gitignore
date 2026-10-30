@@ -9,3 +9,23 @@ Thumbs.db
 .idea/
 .vscode/
 coverage/
+
+__pycache__/
+*.pyc
+
+backend/db.sqlite3
+backend/celerity-frontend-source.zip
+
+artifacts/
+
+backend/.local-test/
+
+# Dados locais e arquivos privados nunca devem ir para o GitHub.
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite3-*
+*.db
+.venv/
+backend/.local-test/
+integrations/

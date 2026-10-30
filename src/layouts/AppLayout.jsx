@@ -1,3 +1,5 @@
+import { LOCAL_TEST_MODE } from '../utils/config'
+import { useLicenseAlerts } from '../hooks/useLicenseAlerts'
 import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
@@ -59,6 +61,7 @@ export function AppLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [userOpen, setUserOpen] = useState(false)
+  const { alerts: licenseAlerts, unread, error: alertsError } = useLicenseAlerts()
   const location = useLocation()
   const navigate = useNavigate()
   const session = authService.getSession()
@@ -90,9 +93,8 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [])
 
-  const logout = () => {
-    authService.logout()
-    navigate('/login')
+  const logout = async () => {
+    try { await authService.logout(); navigate('/login') } catch { window.alert('Não foi possível encerrar a sessão. Tente novamente.') }
   }
 
   const NavGroup = ({ label, items }) => (
@@ -132,9 +134,9 @@ export function AppLayout() {
         <header className="app-header">
           <button className="mobile-menu" onClick={() => setMobileOpen(true)} aria-label="Abrir menu"><SidebarSimple size={23} /></button>
           <button className="global-search" onClick={() => setSearchOpen(true)}><MagnifyingGlass size={19} /><span>Pesquisar processos, empresas ou documentos</span><kbd>⌘ K</kbd></button>
-          <div className="app-header__actions">
+          <div className="app-header__actions">{LOCAL_TEST_MODE && <Link className="local-test-shortcut" to="/app/teste-alertas">Testar alertas</Link>}
             <button className="mobile-search-button" type="button" onClick={() => setSearchOpen(true)} aria-label="Abrir pesquisa global"><MagnifyingGlass size={21} /></button>
-            <NavLink to="/app/notificacoes" className="notification-button" aria-label="Notificações"><Bell size={21} /><span /></NavLink>
+            <NavLink to="/app/notificacoes" className="notification-button" aria-label={`Notificações: ${unread} não lidas`}><Bell size={21} />{unread > 0 && <span />}</NavLink>
             <button className="user-menu" type="button" aria-expanded={userOpen} onClick={() => setUserOpen(!userOpen)}>
               <span className="avatar">{initials}</span>
               <span className="user-menu__copy"><strong>{session?.name || 'Mariana Costa'}</strong><small>{session?.role || 'Gestora'}</small></span>
@@ -144,7 +146,7 @@ export function AppLayout() {
             <button className="logout-button" onClick={logout} title="Sair" aria-label="Sair"><SignOut size={20} /></button>
           </div>
         </header>
-        <main className="page-content">{restrictedRoute ? <section className="access-denied"><span><ShieldCheck size={30} /></span><p className="eyebrow">Acesso por perfil</p><h1>Este módulo não faz parte da sua área de trabalho.</h1><p>O menu foi personalizado para as responsabilidades do perfil <strong>{session?.role}</strong>. Se precisar consultar este conteúdo, solicite a liberação ao gestor da conta.</p><Link className="button button--primary" to="/app/dashboard">Voltar para a visão geral</Link></section> : <Outlet />}</main>
+        <main className="page-content">{alertsError && <p role="alert">Não foi possível atualizar os alertas de licenças. {alertsError}</p>}{licenseAlerts.length > 0 && <aside className="license-reminder-banner" role="status"><WarningCircle size={22} /><div><strong>{licenseAlerts.length} licença(s) precisam de renovação</strong><span>Verifique os vencimentos e solicite uma nova licença ao órgão responsável.</span></div><Link to="/app/notificacoes">Ver alertas</Link></aside>}{restrictedRoute ? <section className="access-denied"><span><ShieldCheck size={30} /></span><p className="eyebrow">Acesso por perfil</p><h1>Este módulo não faz parte da sua área de trabalho.</h1><p>O menu foi personalizado para as responsabilidades do perfil <strong>{session?.role}</strong>. Se precisar consultar este conteúdo, solicite a liberação ao gestor da conta.</p><Link className="button button--primary" to="/app/dashboard">Voltar para a visão geral</Link></section> : <Outlet />}</main>
         <nav className="mobile-bottom-nav" aria-label="Atalhos principais">{mobileItems.map(({ label, to, icon: Icon }) => <NavLink key={to} to={to} end={to === '/app/dashboard'}><Icon size={21} /><span>{label === 'Visão geral' ? 'Início' : label}</span></NavLink>)}<button type="button" onClick={() => setMobileOpen(true)}><SidebarSimple size={21} /><span>Mais</span></button></nav>
         <ContextHelp />
       </div>

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}
+Dashboard
+{% endblock %}
+
+{% block content %}
+
+<h2>Dashboard</h2>
+
+<div class="row">
+
+<div class="col-md-3">
+<div class="card p-3">
+<h5>Poços</h5>
+<p>{{ total_pocos }}</p>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3">
+<h5>Licenciados</h5>
+<p>{{ total_licenciados }}</p>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3">
+<h5>Indeferidos</h5>
+<p>{{ total_indeferidos }}</p>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="card p-3">
+<h5>Em Exigência</h5>
+<p>{{ total_exigencias }}</p>
+</div>
+</div>
+
+</div>
+
+{% endblock %}

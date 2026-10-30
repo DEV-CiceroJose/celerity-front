@@ -1,9 +1,13 @@
-import { useState } from 'react'
+import { apiRequest } from '../services/api'
+import { useEffect, useState } from 'react'
 import { ArrowRight, CalendarBlank, ChartLineUp, Clock, DotsThree, FileText, Plus, SlidersHorizontal, Warning } from '../components/icons'
 import { Link } from 'react-router-dom'
 import { Breadcrumb, Button, PageHeader, StatusBadge } from '../components/ui'
-import { dashboardMetrics, mockRows } from '../data/mockData'
+import { dashboardMetrics } from '../data/mockData'
 import { authService } from '../services/authService'
+import { useBrasiliaClock } from '../hooks/useBrasiliaClock'
+import { useResources } from '../hooks/useResources'
+import { BRASILIA_TIME_ZONE, remainingLabel } from '../utils/dates'
 
 const activity = [
   ['Licença anexada', 'Ana Beatriz adicionou LO nº 2026-1189', 'há 18 min'],
@@ -14,6 +18,8 @@ const activity = [
 
 export function DashboardPage() {
   const session = authService.getSession()
+  const now = useBrasiliaClock()
+  const { rows: processes, today } = useResources('processos')
   const [period, setPeriod] = useState('30')
   const [customize, setCustomize] = useState(false)
   const [widgets, setWidgets] = useState(() => JSON.parse(localStorage.getItem('celerity_dashboard_widgets') || 'null') || ['chart', 'deadlines', 'status', 'activity', 'stalled'])
@@ -32,7 +38,8 @@ export function DashboardPage() {
       { label: 'Prazo excedido', value: '04', change: 'R$ 7.890,00', tone: 'danger' },
     ],
   }
-  const metrics = roleMetrics[session?.role] || dashboardMetrics
+  const [metrics, setMetrics] = useState([])
+  useEffect(() => { apiRequest('/dashboard/summary/').then((data) => setMetrics(data.metrics)).catch(() => setMetrics([])) }, [])
   const metricPaths = session?.role === 'Financeiro'
     ? ['/app/pagamentos?status=Aguardando pagamento', '/app/pagamentos?status=Pago', '/app/pagamentos?query=vence', '/app/pagamentos?status=Prazo excedido']
     : ['/app/processos', '/app/licencas?status=Em análise', '/app/exigencias?status=Pendente', '/app/processos?status=Prazo expirado']
@@ -48,7 +55,7 @@ export function DashboardPage() {
   return (
     <>
       <Breadcrumb items={['Visão geral']} />
-      <PageHeader eyebrow="Sábado, 1 de agosto" title={`Olá, ${firstName}.`} description={`Sua visão de ${session?.role?.toLowerCase() || 'gestão'} está organizada por prioridade nos ${periodLabel}.`} secondary={<><label className="dashboard-period"><CalendarBlank size={17} /><span className="sr-only">Período do painel</span><select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="365">Último ano</option></select></label><Button variant="secondary" icon={SlidersHorizontal} onClick={() => setCustomize(!customize)}>Personalizar</Button></>} />
+      <PageHeader eyebrow={new Intl.DateTimeFormat('pt-BR', { timeZone: BRASILIA_TIME_ZONE, dateStyle: 'full', timeStyle: 'medium' }).format(now) + ' · Brasília'} title={`Olá, ${firstName}.`} description={`Sua visão de ${session?.role?.toLowerCase() || 'gestão'} está organizada por prioridade nos ${periodLabel}.`} secondary={<><label className="dashboard-period"><CalendarBlank size={17} /><span className="sr-only">Período do painel</span><select value={period} onChange={(event) => setPeriod(event.target.value)}><option value="7">Últimos 7 dias</option><option value="30">Últimos 30 dias</option><option value="90">Últimos 90 dias</option><option value="365">Último ano</option></select></label><Button variant="secondary" icon={SlidersHorizontal} onClick={() => setCustomize(!customize)}>Personalizar</Button></>} />
       {customize && <section className="dashboard-customizer"><div><strong>Escolha o que aparece no seu painel</strong><span>Esta preferência fica salva neste dispositivo.</span></div>{[['chart','Evolução'],['deadlines','Prazos'],['status','Status'],['activity','Atividades'],['stalled','Processos parados']].map(([key, label]) => <label key={key}><input type="checkbox" checked={widgets.includes(key)} onChange={() => toggleWidget(key)} />{label}</label>)}</section>}
 
       <section className="dashboard-shortcuts"><div><strong>Ações rápidas</strong><span>Comece pelas tarefas mais frequentes do seu perfil.</span></div>{quickActions.map(([label, path], index) => <Link to={path} key={label}><span>{index === 2 ? <FileText size={18} /> : <Plus size={18} />}</span>{label}<ArrowRight size={15} /></Link>)}</section>
@@ -71,9 +78,9 @@ export function DashboardPage() {
         {widgets.includes('deadlines') && <section className="panel deadlines-panel">
           <div className="panel__header"><div><p className="eyebrow">Prioridades</p><h2>Próximos prazos</h2></div><Link to="/app/exigencias">Ver todos <ArrowRight size={16} /></Link></div>
           <div className="deadline-list">
-            <article><div className="deadline-date deadline-date--danger"><strong>03</strong><span>AGO</span></div><div><strong>Estudo hidrogeológico</strong><span>Águas do Sertão SPE</span><small>SRH 2026/001395</small></div><StatusBadge>3 dias</StatusBadge></article>
-            <article><div className="deadline-date"><strong>06</strong><span>AGO</span></div><div><strong>Pagamento de boleto</strong><span>Construtora Horizonte S.A.</span><small>Solicitação 2026-0912</small></div><StatusBadge>6 dias</StatusBadge></article>
-            <article><div className="deadline-date"><strong>08</strong><span>AGO</span></div><div><strong>Complementação documental</strong><span>Eco Norte Indústria Ltda.</span><small>SEMACE 2026/004812</small></div><StatusBadge>8 dias</StatusBadge></article>
+            <article><div className="deadline-date deadline-date--danger"><strong>03</strong><span>AGO</span></div><div><strong>Estudo hidrogeológico</strong><span>Águas do Sertão SPE</span><small>SRH 2026/001395</small></div><StatusBadge>{remainingLabel('2026-08-03', today)}</StatusBadge></article>
+            <article><div className="deadline-date"><strong>06</strong><span>AGO</span></div><div><strong>Pagamento de boleto</strong><span>Construtora Horizonte S.A.</span><small>Solicitação 2026-0912</small></div><StatusBadge>{remainingLabel('2026-08-06', today)}</StatusBadge></article>
+            <article><div className="deadline-date"><strong>08</strong><span>AGO</span></div><div><strong>Complementação documental</strong><span>Eco Norte Indústria Ltda.</span><small>SEMACE 2026/004812</small></div><StatusBadge>{remainingLabel('2026-08-08', today)}</StatusBadge></article>
           </div>
         </section>}
 
@@ -90,7 +97,7 @@ export function DashboardPage() {
 
       {widgets.includes('stalled') && <section className="panel compact-table-panel">
         <div className="panel__header"><div><p className="eyebrow">Atenção necessária</p><h2>Processos com maior tempo parado</h2></div><Link to="/app/processos">Abrir processos <ArrowRight size={16} /></Link></div>
-        <div className="compact-table">{mockRows.processos.slice(0, 3).map((row, index) => <Link to={`/app/processos/${row.id}`} key={row.id}><span className="rank">0{index + 1}</span><div><strong>{row.primary}</strong><span>{row.secondary}</span></div><span>{row.owner}</span><StatusBadge>{row.status}</StatusBadge><strong className="days">{47 - index * 8} dias</strong><ArrowRight size={17} /></Link>)}</div>
+        <div className="compact-table">{processes.filter((row) => !row.dataConclusao).sort((a, b) => (b.diasContados ?? 0) - (a.diasContados ?? 0)).slice(0, 3).map((row, index) => <Link to={`/app/processos/${row.id}`} key={row.id}><span className="rank">0{index + 1}</span><div><strong>{row.primary}</strong><span>{row.secondary}</span></div><span>{row.owner}</span><StatusBadge>{row.status}</StatusBadge><strong className="days">{row.diasContados ?? 0} dias contados</strong><ArrowRight size={17} /></Link>)}</div>
       </section>}
     </>
   )

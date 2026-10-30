@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+
+<meta charset="UTF-8">
+<title>{% block title %}Sistema{% endblock %}</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+<style>
+
+body{
+background:#f4f6f9;
+}
+
+.sidebar{
+height:100vh;
+background:#1f2937;
+}
+
+.sidebar a{
+color:white;
+display:block;
+padding:12px;
+text-decoration:none;
+}
+
+.sidebar a:hover{
+background:#374151;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<nav class="navbar navbar-light bg-white border-bottom px-4">
+
+<div>
+
+<strong>NOME DA EMPRESA</strong><br>
+<span>NOME DO SISTEMA</span>
+
+</div>
+
+<div>
+
+<img src="/static/logo.png" height="40">
+
+</div>
+
+</nav>
+
+<div class="container-fluid">
+
+<div class="row">
+
+<div class="col-2 sidebar">
+
+<a href="/">Dashboard</a>
+
+<a href="{% url 'lista_responsaveis' %}">
+Responsáveis
+</a>
+
+<a href="{% url 'lista_pocos' %}">
+Poços
+</a>
+
+<a href="{% url 'lista_licenciados' %}">
+Licenciados
+</a>
+
+<a href="{% url 'lista_indeferidos' %}">
+Indeferidos
+</a>
+
+<a href="{% url 'lista_exigencia' %}">
+Exigências
+</a>
+
+</div>
+
+<div class="col-10 p-4">
+
+{% block content %}
+{% endblock %}
+
+</div>
+
+</div>
+
+</div>
+
+</body>
+
+</html>

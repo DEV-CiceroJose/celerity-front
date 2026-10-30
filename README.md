@@ -1,75 +1,55 @@
-# Frontend Celerity Ambiental
+# Celerity Ambiental
 
-Interface React para o sistema de gestão ambiental da Celerity. O projeto usa dados simulados isolados em `src/data` e uma camada de serviços preparada para a futura API Django.
+Frontend React/Vite integrado ao backend Django, com datas em Brasília e lembretes de renovação de licenças.
 
-Responsável pelo projeto: **DEV-CiceroJose**.
+## Executar a partir deste repositório
 
-## Executar
+Backend, em uma janela:
 
-```bash
-npm install
+```powershell
+cd backend
+py -m venv .venv
+Copy-Item .env.example .env
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver
+```
+
+Frontend, na raiz, em outra janela:
+
+```powershell
+npm ci
 npm run dev
 ```
 
-Copie `.env.example` para `.env` se precisar alterar a URL da API.
+Abra http://127.0.0.1:5173. O Vite encaminha `/api` para `127.0.0.1:8000`. A versão em `backend/frontend` também contém a interface atualizada para permitir distribuir o projeto completo em um ZIP.
 
-## Rotas públicas
+## Dias e lembretes de licenças
 
-- `/` — landing page
-- `/login` — acesso ao sistema
-- `/cadastro` — solicitação de cadastro
-- `/recuperar-senha`
-- `/redefinir-senha`
-- `/sessao-expirada`
+Data, hora e contagem de dias seguem Brasília. Os formulários apresentam **Dias contados** automaticamente, e as notificações de renovação usam uma antecedência única no servidor, padrão de 60 dias.
 
-## Rotas do sistema
+Os alertas, seus estados de leitura e os registros são persistidos no Django por usuário. O módulo de e-mail usa as licenças reais, guarda os envios e possui uma rotina automática independente do navegador. É necessário configurar SMTP e manter a rotina em execução para enviar e-mails reais.
 
-Todas ficam sob `/app`: `dashboard`, `empresas`, `processos`, `pocos`, `licencas`, `exigencias`, `pagamentos`, `calendario`, `controle-mensal`, `assessoria`, `documentos`, `relatorios`, `usuarios`, `configuracoes`, `notificacoes` e `ajuda`.
+Veja [LEMBRETES_E_DATAS.md](./LEMBRETES_E_DATAS.md) e [o guia de execução completo](./backend/COMO_RODAR.md).
 
-Os módulos principais incluem rotas de listagem, cadastro, detalhes e edição. Poços inclui as subáreas de acompanhamento, licenciados, indeferidos e exigências; licenças inclui o calendário de vencimentos.
+## Verificar
 
-## Experiência disponível
-
-- landing page comercial orientada às dores do cliente;
-- busca global com `Ctrl + K` ou `⌘ K`;
-- filtros persistentes, visões salvas e ações rápidas;
-- formulários validados com rascunho automático;
-- calendário unificado e relatórios configuráveis;
-- central de ajuda pesquisável e notificações interativas;
-- onboarding por perfil, estados de conexão e controle de permissões;
-- layout responsivo, tabelas em cartões no celular e animações com scroll reveal.
-
-Acesso demonstrativo: `demo@celerityambiental.com.br` com a senha `Celerity@2026`.
-
-## Integração futura
-
-Variável necessária:
-
-```env
-VITE_API_URL=http://localhost:8000/api
+```powershell
+npm test
+npm run build
+cd backend
+.\.venv\Scripts\python.exe manage.py test integracao celerity_reminders processos pocos outros
 ```
 
-Os serviços devem concentrar toda comunicação HTTP. A autenticação atual é simulada via armazenamento local e deve ser substituída por sessão segura ou token HTTP-only fornecido pelo backend.
+Acesso de demonstração existente: `demo@celerityambiental.com.br`, senha `Celerity@2026`. O projeto recebido tem configuração local de desenvolvimento; a publicação em servidor exige as configurações de produção do Django.
 
-O procedimento completo, os endpoints sugeridos e a configuração do Django estão em [INTEGRACAO_BACKEND.md](./INTEGRACAO_BACKEND.md).
+## Demonstração local com alertas ativos
 
-## Pendências de backend
+Veja [TESTE_LOCAL.md](./TESTE_LOCAL.md). O painel oferece dados fictícios e envio manual de um lembrete real após conectar uma conta de e-mail.
 
-- disponibilizar endpoints REST;
-- implementar autenticação e permissões por perfil;
-- vincular formulários aos endpoints;
-- substituir mocks por respostas da API;
-- implementar upload e download protegido;
-- ativar exportações PDF/Excel e notificações reais.
 
-## Evolução da experiência
+## Ambiente e opção de mocks
 
-### Landing institucional
+O backend lê `backend/.env`; o repositório fornece apenas o modelo sem credenciais em `backend/.env.example`. Configure nele a chave do Brevo e um remetente validado. Mantenha as credenciais fora do frontend.
 
-A landing reúne serviços técnicos, comparação antes/depois, poços e outorgas, uma jornada de três etapas e uma prévia interativa de processos, licenças e documentos. A prévia utiliza os mesmos registros demonstrativos de `src/data/mockData.js`; não são clientes reais ou resultados comerciais comprovados.
-
-O diagnóstico prepara um resumo no navegador, sem criar conta ou enviar dados à API. O visitante pode copiá-lo e compartilhar pelo canal de atendimento que utiliza. Para habilitar o botão **Continuar no WhatsApp**, configure `VITE_CONTACT_WHATSAPP` no `.env.local` com o número comercial confirmado (55 + DDD + número, somente dígitos) e reinicie o servidor ou gere um novo build. O visitante revisa e envia a mensagem no próprio WhatsApp. Não há captura automática de leads.
-
-Depoimentos, métricas de clientes e portfólio precisam de material real aprovado antes de publicação. Os links regionais apontam para páginas oficiais da SEMACE e da SRH; não representam integração ou vínculo institucional.
-
-As melhorias recomendadas de interface e experiência estão organizadas em [ROADMAP_UI_UX.md](./ROADMAP_UI_UX.md).
+`CELERITY_LOCAL_TEST_MODE=false` é o padrão. Para testar, altere para `true`, deixe `CELERITY_DB_PATH` em branco e execute `seed_local_test` após as migrações. O cenário usa seu próprio banco e exibe dois alertas ativos. Veja [o passo a passo](./TESTE_LOCAL.md#habilitar-o-cenário-pelo-env).

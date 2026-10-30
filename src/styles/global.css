@@ -770,3 +770,26 @@ body { background-color: var(--background); background-image: radial-gradient(ci
   .table-shell tr { border-radius: 17px; box-shadow: 0 8px 25px rgba(11,16,13,.055); }
   .mobile-bottom-nav { border-top-color: var(--border); background: rgba(255,255,255,.92); backdrop-filter: blur(18px); }
 }
+
+.counted-days { padding: 20px; margin-bottom: 20px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.counted-days p, .counted-days > span, .reminder-description { color: var(--text-secondary); font-size: .8rem; line-height: 1.5; }
+.license-reminder-banner { display: flex; align-items: center; gap: 12px; padding: 16px; margin-bottom: 20px; background: #fff7dc; color: #694b00; border: 1px solid #e9ce7a; border-radius: var(--radius-md); }
+.license-reminder-banner > div { flex: 1; display: flex; flex-direction: column; gap: 5px; font-size: .8rem; }
+.license-reminder-banner > a { text-decoration: underline; font-size: .8rem; font-weight: 700; }
+.calendar-day--today { background: #e8faed; box-shadow: inset 0 0 0 2px var(--green-dark); }
+@media (max-width: 600px) { .license-reminder-banner { flex-wrap: wrap; } .license-reminder-banner > a { margin-left: 34px; } }
+
+@media (max-width: 760px) { .resource-form .form-actions { bottom: calc(86px + env(safe-area-inset-bottom, 0px)); } }
+
+@media (max-width: 760px) { .app-main:has(.resource-form) > .context-help { bottom: calc(220px + env(safe-area-inset-bottom, 0px)); } }
+
+.local-test-panel { padding: 28px; max-width: 860px; }
+.local-test-panel h2 { font-size: 1.25rem; }
+.local-test-panel p, .local-test-panel li { color: var(--text-secondary); font-size: .85rem; line-height: 1.6; }
+.local-test-panel a:not(.button) { color: var(--green-dark); text-decoration: underline; }
+.local-test-form { display: flex; flex-direction: column; gap: 18px; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--border); }
+.local-test-form input, .local-test-form select { min-height: 46px; width: 100%; }
+.local-test-account { padding: 20px; background: var(--surface-muted); border: 1px solid var(--border); border-radius: 16px; display: flex; flex-direction: column; gap: 12px; }
+.local-test-shortcut { padding: 8px 12px; background: #fff7dc; color: #694b00; border-radius: 8px; font-size: .75rem; font-weight: 700; }
+.local-test-entry { padding: 60px 24px; }
+@media (max-width: 600px) { .local-test-panel { padding: 20px; } .local-test-account { padding: 14px; } }
